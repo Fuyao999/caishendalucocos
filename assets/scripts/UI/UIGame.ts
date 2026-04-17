@@ -1170,6 +1170,14 @@ export class UIGame extends Component {
                     console.error('goldLabel更新失败: goldLabel=', this.goldLabel, 'r.newGold=', r.newGold);
                 }
 
+                // 更新功德显示
+                if (this.meritLabel && r.newMerit !== undefined) {
+                    this.meritLabel.string = '功德×' + r.newMerit;
+                    if (gm?.networkManager?.playerData) {
+                        gm.networkManager.playerData.merit = r.newMerit;
+                    }
+                }
+
                 // 立即更新次数和法力显示
                 if (r.remainAlms !== undefined && gm?.networkManager?.playerData) {
                     gm.networkManager.playerData.daily_alms = r.remainAlms;
