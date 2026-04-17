@@ -1208,7 +1208,10 @@ export class UIGame extends Component {
                     const netGain = r.netGain;
                     console.log('netGain:', netGain);
                     const gainText = netGain >= 0 ? '+' + netGain : '' + netGain;
-                    displayText += '\n\n' + gainText + ' 香火钱';
+                    displayText += '\n' + gainText + ' 香火钱';
+                    if (r.fragBonus) {
+                        displayText += '  碎片+' + (r.fragGain || 0);
+                    }
                 }
                 
                 // 先隐藏事件面板，再显示结果
@@ -1254,6 +1257,16 @@ export class UIGame extends Component {
                     if (gm?.networkManager?.playerData) {
                         gm.networkManager.playerData.merit = r.newMerit;
                     }
+                }
+
+                // 更新声望显示
+                if (this.reputationValue && r.newReputation !== undefined && gm?.networkManager?.playerData) {
+                    gm.networkManager.playerData.reputation = r.newReputation;
+                }
+
+                // 更新碎片显示
+                if (this.fragmentValue && r.newFragments !== undefined && gm?.networkManager?.playerData) {
+                    gm.networkManager.playerData.fragments = r.newFragments;
                 }
 
                 // 立即更新次数和法力显示

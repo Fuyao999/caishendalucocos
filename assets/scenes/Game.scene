@@ -42658,7 +42658,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 200,
+      "y": 192,
       "z": 0
     },
     "_lrot": {
@@ -43094,8 +43094,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 163.59375,
-      "height": 50.4
+      "width": 122.6953125,
+      "height": 47.88
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -43127,10 +43127,10 @@
     "_string": "玩家ID：32",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 32,
-    "_fontSize": 32,
+    "_actualFontSize": 24,
+    "_fontSize": 24,
     "_fontFamily": "Arial",
-    "_lineHeight": 40,
+    "_lineHeight": 38,
     "_overflow": 0,
     "_enableWrapText": true,
     "_font": null,
