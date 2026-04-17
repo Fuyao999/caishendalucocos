@@ -11,6 +11,9 @@ export class GameManager extends Component {
     public dataManager: DataManager = null;
     public networkManager: NetworkManager = null;
     
+    // UIGame引用（用于刷新UI）
+    public uiGame: any = null;
+    
     // 设置按钮
     public settingsBtn: Node = null;
     

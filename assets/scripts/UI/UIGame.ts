@@ -285,6 +285,10 @@ export class UIGame extends Component {
     start() {
         console.log('=== UIGame start ===');
 
+        // 注册到GameManager
+        const gm = GameManager.instance;
+        if (gm) gm.uiGame = this;
+
         // 清除旧数据
         if (this.nicknameLabel) this.nicknameLabel.string = '';
         if (this.levelLabel) this.levelLabel.string = '';
