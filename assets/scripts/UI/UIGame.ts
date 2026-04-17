@@ -209,6 +209,30 @@ export class UIGame extends Component {
     @property(Button)
     decorBtn: Button = null;
 
+    // 玩家信息面板
+    @property(Button)
+    playerInfoBtn: Button = null;
+    @property(Node)
+    playerInfoPanel: Node = null;
+    @property(Label)
+    playerIdValue: Label = null;
+    @property(Label)
+    nicknameValue: Label = null;
+    @property(Label)
+    levelValue: Label = null;
+    @property(Label)
+    realmValue: Label = null;
+    @property(Label)
+    shanyuanValue: Label = null;
+    @property(Label)
+    reputationValue: Label = null;
+    @property(Label)
+    fragmentValue: Label = null;
+    @property(Label)
+    bannerValue: Label = null;
+    @property(Label)
+    signDayValue: Label = null;
+
     // 装饰面板
     @property(Node)
     decorPanel: Node = null;
@@ -346,6 +370,57 @@ export class UIGame extends Component {
                 btn.node.on('click', this.onMailClicked, this);
             }
         }
+
+        // 玩家信息（名字）点击
+        const nicknameLabelNode = this.findInScene('NicknameLabel');
+        if (nicknameLabelNode) {
+            const btn = nicknameLabelNode.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', this.onPlayerInfoBtnClicked, this);
+            }
+        }
+
+        // 玩家信息按钮（红色方块）点击
+        const playerInfoBtnNode = this.findInScene('PlayerInfoBtn');
+        if (playerInfoBtnNode) {
+            const btn = playerInfoBtnNode.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', this.onPlayerInfoBtnClicked, this);
+            }
+        }
+
+        // 玩家信息面板关闭按钮
+        const playerInfoCloseBtnNode = this.findInScene('PlayerInfoCloseBtn');
+        if (playerInfoCloseBtnNode) {
+            const btn = playerInfoCloseBtnNode.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', this.onPlayerInfoCloseBtnClicked, this);
+            }
+        }
+
+        // 查找玩家信息面板节点
+        this.playerInfoPanel = this.findInScene('PlayerInfoPanel');
+        if (this.playerInfoPanel) {
+            this.playerInfoPanel.active = false;
+        }
+        const labels = [
+            ['PlayerIdValue', 'playerIdValue'],
+            ['NicknameValue', 'nicknameValue'],
+            ['LevelValue', 'levelValue'],
+            ['RealmValue', 'realmValue'],
+            ['ShanyuanValue', 'shanyuanValue'],
+            ['ReputationValue', 'reputationValue'],
+            ['FragmentValue', 'fragmentValue'],
+            ['BannerValue', 'bannerValue'],
+            ['SignDayValue', 'signDayValue'],
+        ];
+        labels.forEach(([nodeName, propName]) => {
+            const node = this.findInScene(nodeName);
+            if (node) {
+                const lbl = node.getComponent(Label);
+                if (lbl) (this as any)[propName] = lbl;
+            }
+        });
 
         // 邮件面板
         if (!this.mailPanel) {
@@ -1163,7 +1238,7 @@ export class UIGame extends Component {
                 }
 
                 if (this.goldLabel && r.newGold !== undefined) {
-                    this.goldLabel.string = '香火钱 💰' + r.newGold;
+                    this.goldLabel.string = '香火钱 ' + r.newGold;
                     // 同步更新 playerData.gold，防止下次 sync 时被旧值覆盖
                     if (gm?.networkManager?.playerData) {
                         gm.networkManager.playerData.gold = r.newGold;
@@ -1270,7 +1345,7 @@ export class UIGame extends Component {
                     this.levelLabel.string = '等级: ' + (p.level || 1);
                 }
                 if (this.goldLabel) {
-                    this.goldLabel.string = '香火钱 💰' + (p.gold || 0);
+                    this.goldLabel.string = '香火钱 ' + (p.gold || 0);
                 }
                 if (this.yuanbaoLabel) {
                     this.yuanbaoLabel.string = '元宝×' + (p.yuanbao || 0);
@@ -1362,6 +1437,38 @@ export class UIGame extends Component {
         if (this._decorComp) {
             this._decorComp.show();
         }
+    }
+
+    // 玩家信息按钮点击
+    onPlayerInfoBtnClicked() {
+        if (this.playerInfoPanel) {
+            this.playerInfoPanel.active = true;
+            this.updatePlayerInfoPanel();
+        }
+    }
+
+    // 玩家信息面板关闭按钮
+    onPlayerInfoCloseBtnClicked() {
+        if (this.playerInfoPanel) {
+            this.playerInfoPanel.active = false;
+        }
+    }
+
+    // 更新玩家信息面板内容
+    updatePlayerInfoPanel() {
+        const gm = GameManager.instance;
+        const p = gm?.networkManager?.playerData;
+        if (!p) return;
+
+        if (this.playerIdValue) this.playerIdValue.string = '玩家ID：' + (p.player_id || 0);
+        if (this.nicknameValue) this.nicknameValue.string = '昵称：' + (p.nickname || '-');
+        if (this.levelValue) this.levelValue.string = '等级：Lv.' + (p.level || 1);
+        if (this.realmValue) this.realmValue.string = '境界：' + (p.realm_name || p.realm || '-');
+        if (this.shanyuanValue) this.shanyuanValue.string = '善缘：' + (p.faith || 0);
+        if (this.reputationValue) this.reputationValue.string = '声望：' + (p.reputation || 0);
+        if (this.fragmentValue) this.fragmentValue.string = '碎片：' + (p.fragments || 0);
+        if (this.bannerValue) this.bannerValue.string = '招财幡：' + (p.banners || 0);
+        if (this.signDayValue) this.signDayValue.string = '签到天数：' + (p.sign_streak || 0);
     }
 
     // 显示新手引导
