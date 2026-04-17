@@ -12,6 +12,9 @@ export class NetworkManager extends Component {
     
     // 玩家数据（共享）
     public playerData: any = null;
+
+    // 法力恢复速度（从服务端获取，默认10点/小时）
+    public manaRegenPerHour: number = 10;
     
     onLoad() {
         if (NetworkManager._instance === null) {

@@ -274,7 +274,10 @@ export class UIGame extends Component {
             this.loadingLabel.string = '加载中...';
         }
 
-        // 法力恢复：每5秒恢复1点，上限100
+        // 法力恢复：根据后台配置的恢复速度动态计算间隔，上限100
+        const gm2 = GameManager.instance;
+        const regenPerHour = gm2?.networkManager?.manaRegenPerHour || 10;
+        const intervalMs = Math.floor(3600000 / regenPerHour); // 每X毫秒恢复1点
         if (this._manaRegenInterval) {
             clearInterval(this._manaRegenInterval);
         }
@@ -291,7 +294,7 @@ export class UIGame extends Component {
             if (gm?.networkManager?.playerData) {
                 gm.networkManager.syncData(gm.networkManager.playerData).catch(() => {});
             }
-        }, 5000);
+        }, intervalMs);
 
         // 绑定按钮
         this.bindButton(this.almsButton, 'AlmsButton', this.onAlmsClicked.bind(this));
@@ -1233,6 +1236,30 @@ export class UIGame extends Component {
 
                 // 保存到 networkManager.playerData
                 gm.networkManager.playerData = p;
+
+                // 更新法力恢复速度（从服务端获取）
+                if (p.manaRegenPerHour) {
+                    gm.networkManager.manaRegenPerHour = p.manaRegenPerHour;
+                    // 同时重新设置恢复间隔
+                    const newIntervalMs = Math.floor(3600000 / p.manaRegenPerHour);
+                    if (this._manaRegenInterval) {
+                        clearInterval(this._manaRegenInterval);
+                    }
+                    const self = this;
+                    this._manaRegenInterval = setInterval(() => {
+                        const gmInner = GameManager.instance;
+                        const pInner = gmInner?.networkManager?.playerData;
+                        if (pInner && pInner.mana < 100) {
+                            pInner.mana = Math.min(100, pInner.mana + 1);
+                            if (self.manaLabel) {
+                                self.manaLabel.string = '法力 ' + Math.floor(pInner.mana) + '/100';
+                            }
+                        }
+                        if (gmInner?.networkManager?.playerData) {
+                            gmInner.networkManager.syncData(gmInner.networkManager.playerData).catch(() => {});
+                        }
+                    }, newIntervalMs);
+                }
 
                 if (this.loadingLabel) this.loadingLabel.node.active = false;
 
