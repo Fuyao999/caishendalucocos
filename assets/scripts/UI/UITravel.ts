@@ -293,10 +293,35 @@ export class UITravel extends Component {
                 // 显示结果面板
                 const gain = result.data.almsAmount || 0;
                 const name = result.data.targetName || '';
-                this.showResultPanel(
-                    '云游化缘',
-                    `向 ${name} 化缘成功！获得 ${gain} 香火钱`
-                );
+                // 碎片每次云游固定+1
+                const fragGain = 1;
+                const content = `向 ${name} 化缘成功！获得 ${gain} 香火钱，功德 +5，碎片 +${fragGain}，声望 +1`;
+                this.showResultPanel('云游化缘', content);
+                
+                // 更新玩家碎片显示
+                if (result.data.newFragments !== undefined) {
+                    gm.networkManager.playerData.fragments = result.data.newFragments;
+                    // 更新主界面碎片显示
+                    if (gm.uiGame && gm.uiGame.fragmentValue) {
+                        gm.uiGame.fragmentValue.string = '碎片 ' + result.data.newFragments;
+                    }
+                }
+                
+                // 更新玩家声望显示
+                if (result.data.newReputation !== undefined) {
+                    gm.networkManager.playerData.reputation = result.data.newReputation;
+                    if (gm.uiGame && gm.uiGame.reputationValue) {
+                        gm.uiGame.reputationValue.string = '声望 ' + result.data.newReputation;
+                    }
+                }
+                
+                // 更新玩家功德显示
+                if (result.data.newMerit !== undefined) {
+                    gm.networkManager.playerData.merit = result.data.newMerit;
+                    if (gm.uiGame && gm.uiGame.meritLabel) {
+                        gm.uiGame.meritLabel.string = '功德×' + result.data.newMerit;
+                    }
+                }
 
                 console.log('云游化缘成功:', result.data);
             } else {
