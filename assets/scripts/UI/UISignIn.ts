@@ -98,7 +98,9 @@ export class UISignIn extends Component {
                 if (result.data) {
                     this._signStreak = result.data.streak || this._signStreak + 1;
                 }
-                this.updateDisplay(gm.networkManager.playerData);
+                // 临时修改playerData让updateDisplay正确显示
+                const tempData = { ...gm.networkManager.playerData, daily_sign: 1 };
+                this.updateDisplay(tempData);
                 
                 // 刷新玩家数据
                 gm.networkManager.request('/player/info').then((info: any) => {

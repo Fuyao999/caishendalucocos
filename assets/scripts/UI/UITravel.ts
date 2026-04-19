@@ -295,8 +295,19 @@ export class UITravel extends Component {
                 const name = result.data.targetName || '';
                 // 碎片每次云游固定+1
                 const fragGain = 1;
-                const content = `向 ${name} 化缘成功！获得 ${gain} 香火钱，功德 +5，碎片 +${fragGain}，声望 +1`;
-                this.showResultPanel('云游化缘', content);
+                let line1 = `向 ${name} 化缘成功！获得 ${Math.floor(gain)} 香火钱`;
+                // 显示庇佑信息
+                if (result.data.usedBlessing) {
+                    const godNames: any = {
+                        'tudigong': '土地公', 'guanyu': '关羽', 'yaoshaosi': '姚少司',
+                        'chenjiugong': '陈九公', 'fanli': '范蠡', 'caobao': '曹宝',
+                        'liuhai': '刘海', 'xiaosheng': '萧升', 'zhaogongming': '赵公明'
+                    };
+                    const godName = godNames[result.data.usedBlessing] || result.data.usedBlessing;
+                    line1 += ` [${godName}庇佑+${Math.floor(result.data.blessingBonus * 100)}%]`;
+                }
+                const line2 = `功德 +5，碎片 +${fragGain}，声望 +1`;
+                this.showResultPanel('云游化缘', line1 + '\n' + line2);
                 
                 // 更新玩家碎片显示
                 if (result.data.newFragments !== undefined) {
@@ -323,6 +334,14 @@ export class UITravel extends Component {
                     }
                 }
 
+                // 更新庇佑显示
+                if (result.data.deityBuff) {
+                    gm.networkManager.playerData.deity_buff = result.data.deityBuff;
+                    if (gm.uiGame) {
+                        gm.uiGame.updateBlessingDisplay?.();
+                    }
+                }
+
                 console.log('云游化缘成功:', result.data);
             } else {
                 console.error('云游化缘失败:', result);
@@ -346,11 +365,12 @@ export class UITravel extends Component {
     }
 
     formatMoney(value: number): string {
-        if (value >= 100000000) {
-            return (value / 100000000).toFixed(1) + '亿';
-        } else if (value >= 10000) {
-            return (value / 10000).toFixed(1) + '万';
+        const v = Math.floor(value);
+        if (v >= 100000000) {
+            return Math.floor(v / 100000000) + '亿';
+        } else if (v >= 10000) {
+            return Math.floor(v / 10000) + '万';
         }
-        return value.toString();
+        return v.toString();
     }
 }

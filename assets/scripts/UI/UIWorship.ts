@@ -161,7 +161,7 @@ export class UIWorship extends Component {
         }
     }
     
-    doWorship() {
+    async doWorship() {
         console.log('执行供奉');
         const god = GODS[this._selectedGodIndex];
         const mat = MATERIALS[this._selectedMatIndex];
@@ -180,9 +180,16 @@ export class UIWorship extends Component {
             this.resultLabel.color = new Color(255, 215, 0);
         }
         
-        // 模拟供奉效果（实际应该调用后端API）
         const reward = 10 + mat.duration * 5;
         const merit = god.id === 'xiaosheng' ? Math.floor(1.1) : 1;
+        
+        // 调用后端API
+        try {
+            const gm = GameManager.instance;
+            await gm.networkManager.worship(god.id, mat.id);
+        } catch (e) {
+            console.error('供奉API失败:', e);
+        }
         
         // 延迟显示结果
         this.scheduleOnce(() => {

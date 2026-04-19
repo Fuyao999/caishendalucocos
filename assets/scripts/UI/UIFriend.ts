@@ -149,6 +149,19 @@ export class UIFriend extends Component {
             
             const result = await gm.networkManager.request('/friend/visit/' + friend.id, { method: 'POST' });
             if (result.code === 200) {
+                // 更新玩家的善缘和声望
+                if (result.data.newFaith !== undefined) {
+                    gm.networkManager.playerData.faith = result.data.newFaith;
+                    if (gm.uiGame && gm.uiGame.shanyuanValue) {
+                        gm.uiGame.shanyuanValue.string = '善缘：' + result.data.newFaith;
+                    }
+                }
+                if (result.data.newReputation !== undefined) {
+                    gm.networkManager.playerData.reputation = result.data.newReputation;
+                    if (gm.uiGame && gm.uiGame.reputationValue) {
+                        gm.uiGame.reputationValue.string = '声望：' + result.data.newReputation;
+                    }
+                }
                 this.loadFriends();
             }
         } catch (error) {

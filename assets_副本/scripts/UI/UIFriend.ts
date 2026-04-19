@@ -32,6 +32,9 @@ export class UIFriend extends Component {
     @property(Label)
     private visitCountLabel: Label = null;
     
+    @property(Label)
+    private friendCountLabel: Label = null;
+    
     @property(Button)
     private addFriendBtn: Button = null;
     
@@ -79,6 +82,19 @@ export class UIFriend extends Component {
         
         this.emptyHint.active = false;
         
+        // 动态调整滚动区域高度
+        const itemHeight = 90;
+        const contentHeight = this.friends.length * itemHeight;
+        const uiTransform = this.scrollContent.getComponent(UITransform);
+        if (uiTransform) {
+            uiTransform.setContentSize(uiTransform.width, contentHeight);
+        }
+        
+        // 更新好友数量显示
+        if (this.friendCountLabel) {
+            this.friendCountLabel.string = this.friends.length + '/100';
+        }
+        
         // 更新拜访次数显示
         if (this.visitCountLabel) {
             const totalVisits = this.friends.reduce((sum, f) => sum + (f.visitCount || 0), 0);
@@ -90,9 +106,8 @@ export class UIFriend extends Component {
             return;
         }
         
-        const itemHeight = 90;
-        
         this.friends.forEach((friend, index) => {
+            const itemHeight = 90;
             const node = instantiate(this.friendItemTemplate);
             node.setParent(this.scrollContent);
             node.setPosition(0, -index * itemHeight, 0);
@@ -115,6 +130,14 @@ export class UIFriend extends Component {
                         btn.node.on('click', () => this.onVisitClicked(friend), this);
                     }
                 }
+                
+                // 绑定删除按钮
+                if (child.name === 'DeleteBtn') {
+                    const btn = child.getComponent(Button);
+                    if (btn) {
+                        btn.node.on('click', () => this.onDeleteClicked(friend), this);
+                    }
+                }
             }
         });
     }
@@ -126,10 +149,37 @@ export class UIFriend extends Component {
             
             const result = await gm.networkManager.request('/friend/visit/' + friend.id, { method: 'POST' });
             if (result.code === 200) {
+                // 更新玩家的善缘和声望
+                if (result.data.newFaith !== undefined) {
+                    gm.networkManager.playerData.faith = result.data.newFaith;
+                    if (gm.uiGame && gm.uiGame.shanyuanValue) {
+                        gm.uiGame.shanyuanValue.string = '善缘：' + result.data.newFaith;
+                    }
+                }
+                if (result.data.newReputation !== undefined) {
+                    gm.networkManager.playerData.reputation = result.data.newReputation;
+                    if (gm.uiGame && gm.uiGame.reputationValue) {
+                        gm.uiGame.reputationValue.string = '声望：' + result.data.newReputation;
+                    }
+                }
                 this.loadFriends();
             }
         } catch (error) {
             console.error('拜访出错:', error);
+        }
+    }
+    
+    async onDeleteClicked(friend: FriendData) {
+        try {
+            const gm = GameManager.instance;
+            if (!gm?.networkManager) return;
+            
+            const result = await gm.networkManager.request('/friend/' + friend.id, { method: 'DELETE' });
+            if (result.code === 200) {
+                this.loadFriends();
+            }
+        } catch (error) {
+            console.error('删除好友出错:', error);
         }
     }
     

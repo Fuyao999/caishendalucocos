@@ -41,6 +41,9 @@ export class UIGame extends Component {
     meritLabel: Label = null;
 
     @property(Label)
+    blessingLabel: Label = null;  // 财神庇佑显示
+
+    @property(Label)
     manaLabel: Label = null;
 
     @property(Label)
@@ -54,9 +57,6 @@ export class UIGame extends Component {
 
     @property(Button)
     almsButton: Button = null;
-
-    @property(Button)
-    worshipButton: Button = null;
 
     @property(Button)
     refreshButton: Button = null;
@@ -158,9 +158,6 @@ export class UIGame extends Component {
     closeAreaBtn: Button = null;
 
     // 供奉面板(编辑器绑定)
-    @property(Node)
-    worshipPanel: Node = null;
-
     // 庙宇面板(编辑器绑定)
     @property(Node)
     templePanel: Node = null;
@@ -326,7 +323,6 @@ export class UIGame extends Component {
 
         // 绑定按钮
         this.bindButton(this.almsButton, 'AlmsButton', this.onAlmsClicked.bind(this));
-        this.bindButton(this.worshipButton, 'WorshipButton', this.onWorshipClicked.bind(this));
         this.bindButton(this.refreshButton, 'RefreshButton', this.onRefreshClicked.bind(this));
         this.bindButton(this.templeButton, 'TempleButton', this.onTempleClicked.bind(this));
         this.bindButton(this.signInButton, 'SignInButton', this.onSignInClicked.bind(this));
@@ -894,7 +890,6 @@ export class UIGame extends Component {
                     button.node.on(NodeEventType.TOUCH_END, handler, this);
                     // 保存引用
                     if (nodeName === 'AlmsButton') this.almsButton = button;
-                    if (nodeName === 'WorshipButton') this.worshipButton = button;
                     if (nodeName === 'RefreshButton') this.refreshButton = button;
                 }
             } else {
@@ -955,17 +950,6 @@ export class UIGame extends Component {
             this.updateAreaDisplay();
         } else {
             console.error('areaSelectPanel 为 null!');
-        }
-    }
-
-    onWorshipClicked() {
-        console.log('点击供奉');
-        console.log('worshipPanel:', this.worshipPanel);
-
-        if (this.worshipPanel) {
-            this.worshipPanel.active = true;
-        } else {
-            console.error('worshipPanel 为 null!');
         }
     }
 
@@ -1218,6 +1202,25 @@ export class UIGame extends Component {
                     }
                 }
                 
+                // 添加庇佑信息
+                if (r.usedBlessing) {
+                    const godNames: any = {
+                        'tudigong': '土地公', 'guanyu': '关羽', 'yaoshaosi': '姚少司',
+                        'chenjiugong': '陈九公', 'fanli': '范蠡', 'caobao': '曹宝',
+                        'liuhai': '刘海', 'xiaosheng': '萧升', 'zhaogongming': '赵公明'
+                    };
+                    const godName = godNames[r.usedBlessing] || r.usedBlessing;
+                    if (r.blessingBonus < 1) {
+                        displayText += '\n[' + godName + '庇佑 +' + Math.floor(r.blessingBonus * 100) + '%]';
+                    } else {
+                        displayText += '\n[' + godName + '庇佑 +' + Math.floor(r.blessingBonus) + ']';
+                    }
+                    // 更新本地庇佑数据
+                    if (r.deityBuff && gm?.networkManager?.playerData) {
+                        gm.networkManager.playerData.deity_buff = r.deityBuff;
+                    }
+                }
+                
                 // 先隐藏事件面板，再显示结果
                 if (this.almsEventPanel) this.almsEventPanel.active = false;
 
@@ -1281,6 +1284,7 @@ export class UIGame extends Component {
                     gm.networkManager.playerData.mana = r.newMana;
                 }
                 this.updateAreaDisplay();
+                this.updateBlessingDisplay();
                 // 隐藏 loadingLabel
                 if (this.loadingLabel) this.loadingLabel.node.active = false;
             } else {
@@ -1382,6 +1386,9 @@ export class UIGame extends Component {
 
                 // 检查是否需要显示时辰选择或开财门
                 this.checkAndShowDailyPanels(p);
+                
+                // 更新财神庇佑显示
+                this.updateBlessingDisplay();
 
                 // 从服务端更新化缘区域门槛
                 try {
@@ -1486,6 +1493,85 @@ export class UIGame extends Component {
         if (this.fragmentValue) this.fragmentValue.string = '碎片：' + (p.fragments || 0);
         if (this.bannerValue) this.bannerValue.string = '招财幡：' + (p.banners || 0);
         if (this.signDayValue) this.signDayValue.string = '签到天数：' + (p.sign_streak || 0);
+        
+        this.updateBlessingDisplay();
+    }
+    
+    // 财神名称映射
+    private _godNames: { [id: string]: string } = {
+        'tudigong': '土地公',
+        'guanyu': '关羽',
+        'yaoshaosi': '姚少司',
+        'chenjiugong': '陈九公',
+        'fanli': '范蠡',
+        'caobao': '曹宝',
+        'liuhai': '刘海',
+        'xiaosheng': '萧升',
+        'zhaogongming': '赵公明'
+    };
+    
+    // 更新财神庇佑显示（多行格式）
+    updateBlessingDisplay() {
+        const gm = GameManager.instance;
+        const p = gm?.networkManager?.playerData;
+        if (!p || !this.blessingLabel) return;
+        
+        // deity_buff可能是JSON字符串，需要解析
+        let deityBuff = p.deity_buff;
+        if (typeof deityBuff === 'string') {
+            try {
+                deityBuff = JSON.parse(deityBuff);
+            } catch (e) {
+                deityBuff = {};
+            }
+        }
+        deityBuff = deityBuff || {};
+        
+        // 构建多行显示字符串
+        const lines: string[] = ['财神庇佑'];  // 第一行标题
+        for (const godId in deityBuff) {
+            const count = deityBuff[godId].count || 0;
+            if (count > 0) {
+                const name = this._godNames[godId] || godId;
+                lines.push(`${name}: ${count}次`);
+            }
+        }
+        
+        if (lines.length > 1) {
+            this.blessingLabel.string = lines.join('\n');
+        } else {
+            this.blessingLabel.string = '财神庇佑\n无庇佑';
+        }
+    }
+    
+    // 更新香火钱显示（供奉后调用）
+    updateMoney() {
+        const gm = GameManager.instance;
+        const p = gm?.networkManager?.playerData;
+        if (!p) return;
+        if (this.goldLabel) {
+            this.goldLabel.string = '香火钱 ' + (p.gold || p.money || 0);
+        }
+    }
+
+    // 更新等级显示（庙宇升级后调用）
+    updateLevel() {
+        const gm = GameManager.instance;
+        const p = gm?.networkManager?.playerData;
+        if (!p) return;
+        if (this.levelLabel) {
+            this.levelLabel.string = '等级 Lv.' + (p.level || 1);
+        }
+    }
+    
+    // 更新功德显示（供奉后调用）
+    updateMerit() {
+        const gm = GameManager.instance;
+        const p = gm?.networkManager?.playerData;
+        if (!p) return;
+        if (this.meritLabel) {
+            this.meritLabel.string = '功德×' + (p.merit || 0);
+        }
     }
 
     // 显示新手引导

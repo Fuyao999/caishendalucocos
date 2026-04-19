@@ -83,7 +83,13 @@ export class NetworkManager extends Component {
             console.log('响应内容:', responseText);
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ` + responseText);
+                // 尝试解析错误响应JSON
+                try {
+                    const errData = JSON.parse(responseText);
+                    return { code: response.status, message: errData.message || `请求失败(${response.status})`, data: errData };
+                } catch(e2) {
+                    throw new Error(`HTTP ${response.status}: ` + responseText);
+                }
             }
             
             const data = JSON.parse(responseText);
@@ -130,6 +136,12 @@ export class NetworkManager extends Component {
         });
     }
     
+    async clearShield(): Promise<any> {
+        return this.request('/player/clear-shield', {
+            method: 'POST'
+        });
+    }
+    
     async getLeaderboard(type: string = 'gold'): Promise<any> {
         return this.request(`/player/leaderboard?type=${type}`);
     }
@@ -142,7 +154,7 @@ export class NetworkManager extends Component {
     }
     
     async alms(): Promise<any> {
-        return this.request('/alms/alms', {
+        return this.request('/alms/go', {
             method: 'POST'
         });
     }
@@ -153,9 +165,39 @@ export class NetworkManager extends Component {
         });
     }
     
+    async getTempleData(): Promise<any> {
+        return this.request('/player/temple-data', { method: 'GET' });
+    }
+
     async collectTempleStorage(): Promise<any> {
         return this.request('/player/collect-temple', {
             method: 'POST'
+        });
+    }
+    
+    async upgradeTemple(): Promise<any> {
+        return this.request('/player/upgrade-temple', { method: 'POST' });
+    }
+    
+    async openHeavenDoor(): Promise<any> {
+        return this.request('/player/open-heaven-door', { method: 'POST' });
+    }
+    
+    async composeBanner(): Promise<any> {
+        return this.request('/player/compose-banner', { method: 'POST' });
+    }
+    
+    async incenseFriend(): Promise<any> {
+        return this.request('/player/incense-friend', { method: 'POST' });
+    }
+    
+    async renewIncense(incenseType: string, incenseEndAt: number): Promise<any> {
+        return this.request('/player/update-incense', {
+            method: 'POST',
+            body: JSON.stringify({
+                incense_type: incenseType,
+                incense_end_at: incenseEndAt
+            })
         });
     }
     

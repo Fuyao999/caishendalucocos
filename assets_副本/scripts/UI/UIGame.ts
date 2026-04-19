@@ -209,6 +209,30 @@ export class UIGame extends Component {
     @property(Button)
     decorBtn: Button = null;
 
+    // 玩家信息面板
+    @property(Button)
+    playerInfoBtn: Button = null;
+    @property(Node)
+    playerInfoPanel: Node = null;
+    @property(Label)
+    playerIdValue: Label = null;
+    @property(Label)
+    nicknameValue: Label = null;
+    @property(Label)
+    levelValue: Label = null;
+    @property(Label)
+    realmValue: Label = null;
+    @property(Label)
+    shanyuanValue: Label = null;
+    @property(Label)
+    reputationValue: Label = null;
+    @property(Label)
+    fragmentValue: Label = null;
+    @property(Label)
+    bannerValue: Label = null;
+    @property(Label)
+    signDayValue: Label = null;
+
     // 装饰面板
     @property(Node)
     decorPanel: Node = null;
@@ -244,6 +268,7 @@ export class UIGame extends Component {
     private _currentAlmsAreaId: string = '';  // 当前化缘区域ID
     private _currentAlmsMode: string = 'safe';  // 当前化缘模式
     private _manaRegenInterval: number = 0;  // 法力恢复定时器ID
+    private _isReloading: boolean = false;  // 防止 update 和 setTimeout 同时触发 loadPlayerDataCore
     // 8个区域配置
     // type: '5r'=前6区(稳求/险求模式), '2r'=后2区(纯赌博模式)
     private _areas = [
@@ -260,6 +285,10 @@ export class UIGame extends Component {
     start() {
         console.log('=== UIGame start ===');
 
+        // 注册到GameManager
+        const gm = GameManager.instance;
+        if (gm) gm.uiGame = this;
+
         // 清除旧数据
         if (this.nicknameLabel) this.nicknameLabel.string = '';
         if (this.levelLabel) this.levelLabel.string = '';
@@ -273,7 +302,10 @@ export class UIGame extends Component {
             this.loadingLabel.string = '加载中...';
         }
 
-        // 法力恢复：每5秒恢复1点，上限100
+        // 法力恢复：根据后台配置的恢复速度动态计算间隔，上限100
+        const gm2 = GameManager.instance;
+        const regenPerHour = gm2?.networkManager?.manaRegenPerHour || 10;
+        const intervalMs = Math.floor(3600000 / regenPerHour); // 每X毫秒恢复1点
         if (this._manaRegenInterval) {
             clearInterval(this._manaRegenInterval);
         }
@@ -286,7 +318,11 @@ export class UIGame extends Component {
                     this.manaLabel.string = '法力 ' + Math.floor(p.mana) + '/100';
                 }
             }
-        }, 5000);
+            // 每30秒同步一次法力到服务端
+            if (gm?.networkManager?.playerData) {
+                gm.networkManager.syncData(gm.networkManager.playerData).catch(() => {});
+            }
+        }, intervalMs);
 
         // 绑定按钮
         this.bindButton(this.almsButton, 'AlmsButton', this.onAlmsClicked.bind(this));
@@ -338,6 +374,57 @@ export class UIGame extends Component {
                 btn.node.on('click', this.onMailClicked, this);
             }
         }
+
+        // 玩家信息（名字）点击
+        const nicknameLabelNode = this.findInScene('NicknameLabel');
+        if (nicknameLabelNode) {
+            const btn = nicknameLabelNode.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', this.onPlayerInfoBtnClicked, this);
+            }
+        }
+
+        // 玩家信息按钮（红色方块）点击
+        const playerInfoBtnNode = this.findInScene('PlayerInfoBtn');
+        if (playerInfoBtnNode) {
+            const btn = playerInfoBtnNode.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', this.onPlayerInfoBtnClicked, this);
+            }
+        }
+
+        // 玩家信息面板关闭按钮
+        const playerInfoCloseBtnNode = this.findInScene('PlayerInfoCloseBtn');
+        if (playerInfoCloseBtnNode) {
+            const btn = playerInfoCloseBtnNode.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', this.onPlayerInfoCloseBtnClicked, this);
+            }
+        }
+
+        // 查找玩家信息面板节点
+        this.playerInfoPanel = this.findInScene('PlayerInfoPanel');
+        if (this.playerInfoPanel) {
+            this.playerInfoPanel.active = false;
+        }
+        const labels = [
+            ['PlayerIdValue', 'playerIdValue'],
+            ['NicknameValue', 'nicknameValue'],
+            ['LevelValue', 'levelValue'],
+            ['RealmValue', 'realmValue'],
+            ['ShanyuanValue', 'shanyuanValue'],
+            ['ReputationValue', 'reputationValue'],
+            ['FragmentValue', 'fragmentValue'],
+            ['BannerValue', 'bannerValue'],
+            ['SignDayValue', 'signDayValue'],
+        ];
+        labels.forEach(([nodeName, propName]) => {
+            const node = this.findInScene(nodeName);
+            if (node) {
+                const lbl = node.getComponent(Label);
+                if (lbl) (this as any)[propName] = lbl;
+            }
+        });
 
         // 邮件面板
         if (!this.mailPanel) {
@@ -655,8 +742,8 @@ export class UIGame extends Component {
             this.areaNameLabel.string = area.icon + ' ' + area.name;
         }
         if (this.thresholdLabel) {
-            this.thresholdLabel.string = '今日化缘: ' + usedAlms + '/' + totalAlms;
-            this.thresholdLabel.string += '\n门槛: ' + area.threshold.toLocaleString() + ' 香火';
+            this.thresholdLabel.string = '门槛: ' + area.threshold.toLocaleString() + ' 香火';
+            this.thresholdLabel.string += '\n今日化缘: ' + usedAlms + '/' + totalAlms;
             this.thresholdLabel.string += '\n法力 ' + Math.floor(playerMana) + '/100';
         }
     }
@@ -686,9 +773,9 @@ export class UIGame extends Component {
         const playerGold = gm?.networkManager?.playerData?.gold || 0;
 
         if (playerGold < area.threshold) {
-            // 门槛不足：在 areaNameLabel 显示提示，2秒后恢复
-            if (this.areaNameLabel) {
-                this.areaNameLabel.string = '❌ 香火钱不足，无法进入' + area.name;
+            // 门槛不足：在 thresholdLabel 显示提示，2秒后恢复
+            if (this.thresholdLabel) {
+                this.thresholdLabel.string = '门槛: ' + area.threshold.toLocaleString() + ' 香火\n❌ 香火钱不足，无法进入' + area.name;
                 setTimeout(() => this.updateAreaDisplay(), 2000);
             }
             return;
@@ -714,7 +801,6 @@ export class UIGame extends Component {
             return;
         }
 
-        this._almsThresholdPassed = true;
         if (this.areaSelectPanel) {
             this.areaSelectPanel.active = false;
         }
@@ -765,8 +851,21 @@ export class UIGame extends Component {
     // 化缘结果关闭按钮
     onAlmsResultCloseClicked() {
         console.log('关闭化缘结果面板');
-        if (this.almsResultPanel) {
-            this.almsResultPanel.active = false;
+        // 关闭结果面板
+        const rp = this.almsResultPanel || this.findInScene('AlmsResultPanel');
+        if (rp) {
+            rp.active = false;
+            console.log('结果面板已关闭, active=', rp.active);
+        } else {
+            console.error('结果面板节点未找到!');
+        }
+        // 关闭事件面板
+        const ep = this.almsEventPanel || this.findInScene('AlmsEventPanel');
+        if (ep) {
+            ep.active = false;
+            console.log('事件面板已关闭, active=', ep.active);
+        } else {
+            console.error('事件面板节点未找到!');
         }
     }
 
@@ -836,11 +935,12 @@ export class UIGame extends Component {
     }
 
     update() {
-        if (this._dataLoaded) return;
+        if (this._dataLoaded || this._isReloading) return;
 
         const gm = GameManager.instance;
         if (gm && gm.networkManager) {
             this._dataLoaded = true;
+            this._isReloading = true;
             this.loadPlayerDataCore(gm);
         }
     }
@@ -1112,7 +1212,10 @@ export class UIGame extends Component {
                     const netGain = r.netGain;
                     console.log('netGain:', netGain);
                     const gainText = netGain >= 0 ? '+' + netGain : '' + netGain;
-                    displayText += '\n\n' + gainText + ' 香火钱';
+                    displayText += '\n' + gainText + ' 香火钱';
+                    if (r.fragBonus) {
+                        displayText += '  碎片+' + (r.fragGain || 0);
+                    }
                 }
                 
                 // 先隐藏事件面板，再显示结果
@@ -1142,10 +1245,32 @@ export class UIGame extends Component {
                 }
 
                 if (this.goldLabel && r.newGold !== undefined) {
-                    this.goldLabel.string = '香火钱 💰' + r.newGold;
+                    this.goldLabel.string = '香火钱 ' + r.newGold;
+                    // 同步更新 playerData.gold，防止下次 sync 时被旧值覆盖
+                    if (gm?.networkManager?.playerData) {
+                        gm.networkManager.playerData.gold = r.newGold;
+                    }
                     console.log('化缘后更新goldLabel为:', r.newGold, 'netGain:', r.netGain);
                 } else {
                     console.error('goldLabel更新失败: goldLabel=', this.goldLabel, 'r.newGold=', r.newGold);
+                }
+
+                // 更新功德显示
+                if (this.meritLabel && r.newMerit !== undefined) {
+                    this.meritLabel.string = '功德×' + r.newMerit;
+                    if (gm?.networkManager?.playerData) {
+                        gm.networkManager.playerData.merit = r.newMerit;
+                    }
+                }
+
+                // 更新声望显示
+                if (this.reputationValue && r.newReputation !== undefined && gm?.networkManager?.playerData) {
+                    gm.networkManager.playerData.reputation = r.newReputation;
+                }
+
+                // 更新碎片显示
+                if (this.fragmentValue && r.newFragments !== undefined && gm?.networkManager?.playerData) {
+                    gm.networkManager.playerData.fragments = r.newFragments;
                 }
 
                 // 立即更新次数和法力显示
@@ -1156,18 +1281,19 @@ export class UIGame extends Component {
                     gm.networkManager.playerData.mana = r.newMana;
                 }
                 this.updateAreaDisplay();
-
-                // 2秒后刷新
-                setTimeout(() => {
-                    this._dataLoaded = false;
-                    this.loadPlayerDataCore(gm);
-                }, 2000);
+                // 隐藏 loadingLabel
+                if (this.loadingLabel) this.loadingLabel.node.active = false;
             } else {
-                // 错误：保留事件面板，在结果区显示错误
+                // 错误：隐藏事件面板，显示错误信息
+                if (this.almsEventPanel) this.almsEventPanel.active = false;
+                // 隐藏 loadingLabel
+                if (this.loadingLabel) this.loadingLabel.node.active = false;
                 const errMsg = result?.message || '化缘失败';
                 if (this.almsResultLabel) {
                     this.almsResultLabel.string = '❌ ' + errMsg;
                 }
+                // 显示结果面板让错误可见
+                if (this.almsResultPanel) this.almsResultPanel.active = true;
                 // 隐藏稳求/险求按钮
                 if (this.almsSafeBtn) this.almsSafeBtn.node.active = false;
                 if (this.almsRiskyBtn) this.almsRiskyBtn.node.active = false;
@@ -1203,6 +1329,30 @@ export class UIGame extends Component {
                 // 保存到 networkManager.playerData
                 gm.networkManager.playerData = p;
 
+                // 更新法力恢复速度（从服务端获取）
+                if (p.manaRegenPerHour) {
+                    gm.networkManager.manaRegenPerHour = p.manaRegenPerHour;
+                    // 同时重新设置恢复间隔
+                    const newIntervalMs = Math.floor(3600000 / p.manaRegenPerHour);
+                    if (this._manaRegenInterval) {
+                        clearInterval(this._manaRegenInterval);
+                    }
+                    const self = this;
+                    this._manaRegenInterval = setInterval(() => {
+                        const gmInner = GameManager.instance;
+                        const pInner = gmInner?.networkManager?.playerData;
+                        if (pInner && pInner.mana < 100) {
+                            pInner.mana = Math.min(100, pInner.mana + 1);
+                            if (self.manaLabel) {
+                                self.manaLabel.string = '法力 ' + Math.floor(pInner.mana) + '/100';
+                            }
+                        }
+                        if (gmInner?.networkManager?.playerData) {
+                            gmInner.networkManager.syncData(gmInner.networkManager.playerData).catch(() => {});
+                        }
+                    }, newIntervalMs);
+                }
+
                 if (this.loadingLabel) this.loadingLabel.node.active = false;
 
                 if (this.nicknameLabel) {
@@ -1212,7 +1362,7 @@ export class UIGame extends Component {
                     this.levelLabel.string = '等级: ' + (p.level || 1);
                 }
                 if (this.goldLabel) {
-                    this.goldLabel.string = '香火钱 💰' + (p.gold || 0);
+                    this.goldLabel.string = '香火钱 ' + (p.gold || 0);
                 }
                 if (this.yuanbaoLabel) {
                     this.yuanbaoLabel.string = '元宝×' + (p.yuanbao || 0);
@@ -1304,6 +1454,38 @@ export class UIGame extends Component {
         if (this._decorComp) {
             this._decorComp.show();
         }
+    }
+
+    // 玩家信息按钮点击
+    onPlayerInfoBtnClicked() {
+        if (this.playerInfoPanel) {
+            this.playerInfoPanel.active = true;
+            this.updatePlayerInfoPanel();
+        }
+    }
+
+    // 玩家信息面板关闭按钮
+    onPlayerInfoCloseBtnClicked() {
+        if (this.playerInfoPanel) {
+            this.playerInfoPanel.active = false;
+        }
+    }
+
+    // 更新玩家信息面板内容
+    updatePlayerInfoPanel() {
+        const gm = GameManager.instance;
+        const p = gm?.networkManager?.playerData;
+        if (!p) return;
+
+        if (this.playerIdValue) this.playerIdValue.string = '玩家ID：' + (p.player_id || 0);
+        if (this.nicknameValue) this.nicknameValue.string = '昵称：' + (p.nickname || '-');
+        if (this.levelValue) this.levelValue.string = '等级：Lv.' + (p.level || 1);
+        if (this.realmValue) this.realmValue.string = '境界：' + (p.realm_name || p.realm || '-');
+        if (this.shanyuanValue) this.shanyuanValue.string = '善缘：' + (p.faith || 0);
+        if (this.reputationValue) this.reputationValue.string = '声望：' + (p.reputation || 0);
+        if (this.fragmentValue) this.fragmentValue.string = '碎片：' + (p.fragments || 0);
+        if (this.bannerValue) this.bannerValue.string = '招财幡：' + (p.banners || 0);
+        if (this.signDayValue) this.signDayValue.string = '签到天数：' + (p.sign_streak || 0);
     }
 
     // 显示新手引导

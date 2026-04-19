@@ -93,6 +93,9 @@ export class UILogin extends Component {
             gm.setLoggedIn(true);
             console.log('登录成功，跳转游戏场景');
             
+            // 每日重置检查
+            gm.networkManager.dailyReset();
+            
             // 隐藏登录界面
             if (this.node) {
                 this.node.active = false;
