@@ -1,4 +1,4 @@
-import { _decorator, Component, Label, Button, Node, Sprite, Color, UITransform, Vec3, SpriteFrame } from 'cc';
+import { _decorator, Component, Label, Button, Node, Sprite, Color, UITransform, Vec3, SpriteFrame, ProgressBar } from 'cc';
 import { GameManager } from '../GameManager';
 const { ccclass, property } = _decorator;
 
@@ -40,6 +40,8 @@ export class UIAchievement extends Component {
     private _messageTimer: number = 0;
     private _showingDetails: boolean = false;
     private _currentTitleId: string = '';
+    private _currentQuests: any[] = [];
+    private _progressBarSized: boolean = false;
 
     start() {
         console.log('UIAchievement start');
@@ -331,6 +333,7 @@ export class UIAchievement extends Component {
         console.log('showIconList');
         this._showingDetails = false;
         this._currentTitleId = '';
+        this._progressBarSized = false;
         
         // 隐藏所有AchievementItem
         for (let i = 1; i <= 12; i++) {
@@ -349,6 +352,12 @@ export class UIAchievement extends Component {
                 const equipBtn = itemNode.getChildByName('EquipBtn');
                 if (equipBtn) equipBtn.active = true;
             }
+        }
+        
+        // 隐藏所有TaskItem
+        for (let i = 1; i <= 5; i++) {
+            const taskNode = this.node.getChildByName('TaskItem' + i);
+            if (taskNode) taskNode.active = false;
         }
         
         // 显示图标列表（初始状态）
@@ -408,9 +417,10 @@ export class UIAchievement extends Component {
         }
     }
     
-    // 显示任务步骤（替换图标列表）
+    // 显示任务步骤（用TaskItem1-5显示5个任务）
     showQuestSteps(titleId: string, quests: any[]) {
         console.log('showQuestSteps:', quests);
+        this._currentQuests = quests;
         
         // 找到对应的称号
         const title = this._titleList.find(t => t.id === titleId);
@@ -422,70 +432,147 @@ export class UIAchievement extends Component {
             if (iconNode) iconNode.active = false;
         }
         
-        // 显示AchievementItem1作为任务列表容器
-        const itemNode = this.node.getChildByName('AchievementItem1');
-        if (!itemNode) return;
+        // 字段中文映射
+        const targetNames: Record<string, string> = {
+            'login_days': '累计登录天数',
+            'total_spent': '累计消费',
+            'invite_count': '累计邀请人数',
+            'worship_count': '累计供奉次数',
+            'total_recharge': '累计充值',
+            'merit': '累计功德',
+            'level': '庙宇等级',
+            'great_count': '大吉次数',
+            'gold': '拥有香火钱',
+            'visit_count': '拜访次数',
+            'god_count': '解锁财神数',
+            'title_count': '解锁称号数'
+        };
         
-        itemNode.active = true;
-        
-        // 隐藏IconLabel和NameLabel
-        const iconLabel = itemNode.getChildByName('IconLabel');
-        if (iconLabel) iconLabel.active = false;
-        const nameLabel = itemNode.getChildByName('NameLabel');
-        if (nameLabel) nameLabel.active = false;
-        
-        // 用DescLabel显示任务列表
-        const descLabel = itemNode.getChildByName('DescLabel');
-        if (descLabel) {
-            descLabel.active = true;
-            descLabel.setPosition(0, 0, 0);
-            const label = descLabel.getComponent(Label);
-            if (label) {
-                // 字段中文映射
-                const targetNames: Record<string, string> = {
-                    'login_days': '累计登录天数',
-                    'total_spent': '累计消费',
-                    'invite_count': '累计邀请人数',
-                    'worship_count': '累计供奉次数',
-                    'total_recharge': '累计充值',
-                    'merit': '累计功德',
-                    'level': '庙宇等级',
-                    'great_count': '大吉次数',
-                    'gold': '拥有香火钱',
-                    'visit_count': '拜访次数',
-                    'god_count': '解锁财神数',
-                    'title_count': '解锁称号数'
-                };
-                
-                let text = '';
-                quests.forEach((q: any, i: number) => {
-                    const status = q.claimed ? '✓ 已领取' : (q.completed ? '● 可领取' : '○ 未完成');
-                    // 替换description中的英文字段为中文
-                    let desc = q.description;
-                    for (const [eng, chn] of Object.entries(targetNames)) {
-                        desc = desc.replace(eng, chn);
-                    }
-                    text += `${i+1}. ${desc}\n   进度: ${q.progress}/${q.target} ${status}`;
-                    if (i < quests.length - 1) {
-                        text += '\n\n';
-                    }
-                });
-                label.string = text;
-                label.fontSize = 18;
-                label.lineHeight = 33;  // 行高33像素，每行约15像素间距
+        // 显示5个任务
+        quests.forEach((quest: any, index: number) => {
+            const taskNodeName = 'TaskItem' + (index + 1);
+            const taskNode = this.node.getChildByName(taskNodeName);
+            if (!taskNode) {
+                console.log('TaskNode not found:', taskNodeName);
+                return;
             }
+            
+            taskNode.active = true;
+            // 位置由编辑器设置，代码不写死
+            
+            // 扩大任务条的点击区域（包含进度条）
+            const taskTransform = taskNode.getComponent(UITransform);
+            if (taskTransform) {
+                taskTransform.setContentSize(500, 80);  // 包含进度条的高度
+            }
+            
+            // 替换字段名为中文，并去掉等号
+            let desc = quest.description;
+            for (const [eng, chn] of Object.entries(targetNames)) {
+                desc = desc.replace(eng, chn);
+            }
+            desc = desc.replace('=', '').replace(/完成/g, '');
+            
+            // IconLabel: 显示状态图标（更大更粗，绿色）
+            const iconLabel = taskNode.getChildByName('IconLabel');
+            console.log('IconLabel node:', iconLabel, 'children:', taskNode.children.map(c => c.name));
+            if (iconLabel) {
+                iconLabel.active = true;
+                // 位置由编辑器设置
+                const label = iconLabel.getComponent(Label);
+                if (label) {
+                    const statusIcon = quest.claimed ? '✓' : (quest.completed ? '●' : '○');
+                    label.string = statusIcon;
+                    label.fontSize = 40;  // 更大
+                    label.color = quest.claimed ? new Color(100, 100, 100) : (quest.completed ? new Color(0, 255, 0) : new Color(150, 150, 150));
+                    console.log('IconLabel set:', statusIcon);
+                }
+            }
+            
+            // NameLabel: 显示任务名称
+            const nameLabel = taskNode.getChildByName('NameLabel');
+            if (nameLabel) {
+                nameLabel.active = true;
+                const label = nameLabel.getComponent(Label);
+                if (label) {
+                    label.string = quest.step + '. ' + desc;
+                    label.fontSize = 22;
+                    label.color = new Color(255, 255, 255);
+                }
+            }
+            
+            // ProgressLabel: 隐藏（用进度条代替）
+            const progressLabel = taskNode.getChildByName('ProgressLabel');
+            if (progressLabel) {
+                progressLabel.active = false;
+            }
+            
+            // ProgressBar: 进度条由编辑器控制
+            
+            // BonusLabel: 显示奖励（编辑器设置位置）
+            const bonusLabel = taskNode.getChildByName('BonusLabel');
+            if (bonusLabel) {
+                bonusLabel.active = true;
+                // 位置由编辑器设置
+                const label = bonusLabel.getComponent(Label);
+                if (label) {
+                    label.string = '+' + (quest.target * 2) + '钱';
+                    label.color = new Color(255, 215, 0);
+                    label.fontSize = 20;
+                    label.horizontalAlign = Label.HorizontalAlign.LEFT;  // 左对齐
+                }
+            }
+            
+            // 点击事件
+            taskNode.off('click');
+            taskNode.on('click', () => {
+                this.onTaskClicked(quest);
+            }, this);
+        });
+        
+        // 隐藏剩余的TaskItem
+        for (let i = quests.length; i < 5; i++) {
+            const taskNode = this.node.getChildByName('TaskItem' + (i + 1));
+            if (taskNode) taskNode.active = false;
+        }
+    }
+    
+    // 点击任务领取奖励
+    async onTaskClicked(quest: any) {
+        if (quest.claimed) {
+            this.showMessage('已领取');
+            return;
+        }
+        if (!quest.completed) {
+            this.showMessage('任务未完成');
+            return;
         }
         
-        // 隐藏BonusLabel
-        const bonusLabel = itemNode.getChildByName('BonusLabel');
-        if (bonusLabel) {
-            bonusLabel.active = false;
-        }
+        console.log('领取任务:', quest.id);
         
-        // 隐藏EquipBtn
-        const equipBtn = itemNode.getChildByName('EquipBtn');
-        if (equipBtn) {
-            equipBtn.active = false;
+        try {
+            const gm = GameManager.instance;
+            const result = await gm.networkManager.request('/quests/claim', {
+                method: 'POST',
+                body: JSON.stringify({ quest_id: quest.id })
+            });
+            
+            console.log('领取结果:', result);
+            if (result.code === 200) {
+                this.showMessage('领取成功！+' + (quest.target * 2) + '钱');
+                // 刷新任务列表
+                if (this._currentTitleId) {
+                    const result2 = await gm.networkManager.request('/quests/by-title/' + this._currentTitleId);
+                    if (result2.code === 200) {
+                        this.showQuestSteps(this._currentTitleId, result2.data.quests);
+                    }
+                }
+            } else {
+                this.showMessage(result.message || '领取失败', true);
+            }
+        } catch (err) {
+            console.error('领取失败:', err);
+            this.showMessage('领取失败', true);
         }
     }
     
