@@ -136,7 +136,7 @@ export class UIShop extends Component {
         // 设置Content大小和锚点
         const itemHeight = 100;
         const contentHeight = Math.max(400, this._shopList.length * itemHeight);
-        const uiTransform = this.shopContent.getComponent('UITransform');
+        const uiTransform = this.shopContent.getComponent(UITransform);
         if (uiTransform) {
             uiTransform.setContentSize(400, contentHeight);
             uiTransform.setAnchorPoint(0.5, 1); // 锚点设为顶部中间

@@ -1,147 +1,290 @@
-import { _decorator, Component, Label, Button, Node, Sprite, Color, UITransform, ScrollView, instantiate } from 'cc';
+import { _decorator, Component, Label, Button, Node, Sprite, Color, UITransform } from 'cc';
 import { GameManager } from '../GameManager';
 const { ccclass, property } = _decorator;
 
-// 任务数据
-interface QuestItem {
-    id: number;
-    name: string;
-    desc: string;
-    reward: number;
+interface QuestData {
+    id: string;
     type: string;
-    completed: boolean;
+    name: string;
+    description: string;
+    target_type: string;
+    target_count: number;
+    progress: number;
     claimed: boolean;
+    done: boolean;
+    reward: {
+        gold: number;
+        merit: number;
+        fragment: number;
+        incense: number;
+        candle: number;
+    };
 }
 
 @ccclass('UIQuest')
 export class UIQuest extends Component {
     
-    // 编辑器绑定的节点
     @property(Node)
     questPanel: Node = null;
     
+    @property(Button)
+    tabTaskBtn: Button = null;
+    
+    @property(Button)
+    tabAchievementBtn: Button = null;
+    
+    @property(Node)
+    taskContent: Node = null;
+    
+    @property(Node)
+    achievementContent: Node = null;
+    
     @property(Label)
-    titleLabel: Label = null;
+    currentTitleLabel: Label = null;
+    
+    @property(Label)
+    messageLabel: Label = null;
     
     @property(Button)
     closeBtn: Button = null;
     
-    @property(Node)
-    scrollContent: Node = null;
-    
-    @property(Node)
-    questItemTemplate: Node = null;
-    
-    private _questList: QuestItem[] = [
-        { id: 1, name: '每日签到', desc: '每天签到一次', reward: 100, type: 'daily', completed: true, claimed: false },
-        { id: 2, name: '供奉财神', desc: '供奉任意财神一次', reward: 50, type: 'worship', completed: true, claimed: false },
-        { id: 3, name: '化缘十次', desc: '完成10次化缘', reward: 200, type: 'alms', completed: true, claimed: false },
-        { id: 4, name: '升级境界', desc: '提升一个境界', reward: 500, type: 'realm', completed: false, claimed: false },
-        { id: 5, name: '收取庙宇', desc: '收取庙宇产出', reward: 30, type: 'temple', completed: true, claimed: false },
-        { id: 6, name: '连续签到7天', desc: '连续签到7天', reward: 1000, type: 'daily', completed: false, claimed: false },
-        { id: 7, name: '功德满1000', desc: '累计获得1000功德', reward: 800, type: 'merit', completed: false, claimed: false },
-        { id: 8, name: '香火钱满10万', desc: '累计获得10万香火钱', reward: 1000, type: 'gold', completed: false, claimed: false },
-    ];
-    
+    private _quests: QuestData[] = [];
+    private _messageTimer: number = 0;
+
     start() {
         console.log('UIQuest start');
         if (this.closeBtn) {
-            this.closeBtn.node.on('click', this.hide, this);
+            this.closeBtn.node.on('click', () => this.hide(), this);
         }
-        this.hide();
+        if (this.tabTaskBtn) {
+            this.tabTaskBtn.node.on('click', () => this.switchTab('task'), this);
+        }
+        if (this.tabAchievementBtn) {
+            this.tabAchievementBtn.node.on('click', () => this.switchTab('achievement'), this);
+        }
+        // 不要在这里 hide()，由 UIGame.ts 管理显示/隐藏
     }
     
     show() {
-        console.log('UIQuest show');
-        if (this.questPanel) {
-            this.questPanel.active = true;
-            this.updateQuestList();
+        console.log('UIQuest show, this.node:', this.node.name);
+        // 直接使用 this.node，因为 UIQuest 组件挂载在 QuestPanel 上
+        if (this.node) {
+            this.node.active = true;
+            this.switchTab('task');
+            this.loadData();
         }
     }
     
     hide() {
-        if (this.questPanel) {
-            this.questPanel.active = false;
+        if (this.node) {
+            this.node.active = false;
         }
     }
     
-    updateQuestList() {
-        console.log('更新任务列表');
-        
-        // 清除旧的列表项
-        if (this.scrollContent) {
-            this.scrollContent.removeAllChildren();
+    switchTab(tab: 'task' | 'achievement') {
+        if (this.taskContent) {
+            this.taskContent.active = tab === 'task';
+        }
+        if (this.achievementContent) {
+            this.achievementContent.active = tab === 'achievement';
         }
         
-        if (!this.questItemTemplate || !this.scrollContent) {
-            console.error('缺少模板或容器');
+        // 更新标签样式
+        if (this.tabTaskBtn) {
+            const sprite = this.tabTaskBtn.getComponent(Sprite);
+            if (sprite) {
+                sprite.color = tab === 'task' ? new Color(255, 200, 0) : new Color(100, 100, 100);
+            }
+        }
+        if (this.tabAchievementBtn) {
+            const sprite = this.tabAchievementBtn.getComponent(Sprite);
+            if (sprite) {
+                sprite.color = tab === 'achievement' ? new Color(255, 200, 0) : new Color(100, 100, 100);
+            }
+        }
+    }
+    
+    async loadData() {
+        const gm = GameManager.instance;
+        if (!gm || !gm.networkManager) return;
+        
+        try {
+            const result = await gm.networkManager.request('/quests/list');
+            if (result.code === 200) {
+                this._quests = result.data?.quests?.filter((q: any) => q.type === 'daily') || [];
+                this.renderTasks();
+            }
+            
+            // 加载称号
+            const titleResult = await gm.networkManager.request('/quests/titles');
+            if (titleResult.code === 200) {
+                const titles = titleResult.data?.titles || [];
+                const equipped = titles.find((t: any) => t.equipped);
+                if (this.currentTitleLabel) {
+                    this.currentTitleLabel.string = '当前称号: ' + (equipped ? equipped.name : '无');
+                }
+            }
+        } catch (err) {
+            console.error('加载任务失败:', err);
+            this.showMessage('加载失败', true);
+        }
+    }
+    
+    renderTasks() {
+        console.log('=== renderTasks called ===');
+        
+        // 如果 taskContent 没有绑定，尝试从 this.node (QuestPanel) 找 TaskContent 子节点
+        let contentNode = this.taskContent;
+        if (!contentNode) {
+            console.log('taskContent is null, searching for TaskContent child...');
+            const children = this.node.children;
+            for (let i = 0; i < children.length; i++) {
+                console.log('Child', i, ':', children[i].name);
+                if (children[i].name === 'TaskContent') {
+                    contentNode = children[i];
+                    console.log('Found TaskContent node!');
+                    break;
+                }
+            }
+        }
+        
+        if (!contentNode) {
+            console.log('ERROR: still no content node!');
             return;
         }
         
-        const itemHeight = 70;
+        contentNode.removeAllChildren();
         
-        // 设置 Content 高度
-        const totalHeight = this._questList.length * itemHeight;
-        const contentTrans = this.scrollContent.getComponent(UITransform);
-        if (contentTrans) {
-            contentTrans.setContentSize(400, Math.max(totalHeight, 300));
+        if (this._quests.length === 0) {
+            const empty = new Node();
+            empty.setParent(contentNode);
+            const label = empty.addComponent(Label);
+            label.string = '暂无每日任务';
+            label.color = new Color(180, 180, 180);
+            return;
         }
         
-        this._questList.forEach((quest, index) => {
-            // 克隆模板
-            const node = instantiate(this.questItemTemplate);
-            node.setParent(this.scrollContent);
-            node.setPosition(0, -index * itemHeight, 0);
-            node.active = true;
+        this._quests.forEach((quest, index) => {
+            this.createTaskItem(quest, index, contentNode);
+        });
+    }
+    
+    createTaskItem(quest: QuestData, index: number, contentNode: Node) {
+        const item = new Node();
+        item.setParent(contentNode);
+        item.setPosition(0, -index * 80, 0);
+        
+        const uiTransform = item.addComponent(UITransform);
+        if (uiTransform) {
+            uiTransform.setContentSize(360, 70);
+        }
+        
+        const bg = item.addComponent(Sprite);
+        bg.color = quest.done && !quest.claimed ? new Color(80, 60, 40) : new Color(50, 50, 60);
+        bg.type = Sprite.Type.SLICE;
+        
+        // 任务名称
+        const nameNode = new Node();
+        nameNode.setParent(item);
+        nameNode.setPosition(-120, 10, 0);
+        const nl = nameNode.addComponent(Label);
+        nl.string = quest.name;
+        nl.color = new Color(255, 255, 255);
+        nl.fontSize = 16;
+        
+        // 描述/进度
+        const descNode = new Node();
+        descNode.setParent(item);
+        descNode.setPosition(-120, -15, 0);
+        const dl = descNode.addComponent(Label);
+        dl.string = `${quest.progress}/${quest.target_count}`;
+        dl.color = quest.done ? new Color(100, 255, 100) : new Color(200, 200, 200);
+        dl.fontSize = 12;
+        
+        // 奖励
+        const rewardNode = new Node();
+        rewardNode.setParent(item);
+        rewardNode.setPosition(80, 0, 0);
+        const rl = rewardNode.addComponent(Label);
+        let rewardStr = '';
+        if (quest.reward.gold > 0) rewardStr += `${quest.reward.gold}金 `;
+        if (quest.reward.fragment > 0) rewardStr += `${quest.reward.fragment}碎 `;
+        if (quest.reward.merit > 0) rewardStr += `${quest.reward.merit}功 `;
+        if (quest.reward.incense > 0) rewardStr += `${quest.reward.incense}香 `;
+        if (quest.reward.candle > 0) rewardStr += `${quest.reward.candle}烛 `;
+        rl.string = rewardStr || '-';
+        rl.color = new Color(255, 215, 0);
+        rl.fontSize = 12;
+        
+        // 领取按钮
+        const claimBtn = new Node();
+        claimBtn.setParent(item);
+        claimBtn.setPosition(150, 0, 0);
+        const btnSprite = claimBtn.addComponent(Sprite);
+        btnSprite.color = quest.done && !quest.claimed ? new Color(46, 204, 113) : new Color(100, 100, 100);
+        btnSprite.type = Sprite.Type.SLICE;
+        
+        const btnTransform = claimBtn.addComponent(UITransform);
+        if (btnTransform) {
+            btnTransform.setContentSize(60, 35);
+        }
+        
+        const btnLabel = new Node();
+        btnLabel.setParent(claimBtn);
+        const bl = btnLabel.addComponent(Label);
+        bl.string = quest.claimed ? '已领' : (quest.done ? '领取' : '进行中');
+        bl.color = new Color(255, 255, 255);
+        bl.fontSize = 14;
+        
+        if (quest.done && !quest.claimed) {
+            claimBtn.on(Node.EventType.TOUCH_END, () => this.onClaimClicked(quest), this);
+        }
+    }
+    
+    async onClaimClicked(quest: QuestData) {
+        if (quest.claimed) return;
+        
+        const gm = GameManager.instance;
+        if (!gm || !gm.networkManager) return;
+        
+        try {
+            const result = await gm.networkManager.request('/quests/claim', {
+                method: 'POST',
+                body: JSON.stringify({ quest_id: quest.id })
+            });
             
-            // 更新显示
-            for (let i = 0; i < node.children.length; i++) {
-                const child = node.children[i];
-                const label = child.getComponent(Label);
-                if (label) {
-                    if (child.name === 'NameLabel') {
-                        label.string = quest.name;
-                    } else if (child.name === 'DescLabel') {
-                        label.string = quest.desc;
-                    } else if (child.name === 'RewardLabel') {
-                        label.string = '+' + quest.reward + ' 香火钱';
-                    }
+            if (result.code === 200) {
+                this.showMessage('领取成功！');
+                quest.claimed = true;
+                
+                if (result.data?.player) {
+                    Object.assign(gm.networkManager.playerData, result.data.player);
+                    gm.uiGame?.updateMoney?.();
                 }
                 
-                // 绑定领取按钮事件
-                if (child.name === 'ClaimBtn') {
-                    const btn = child.getComponent(Button);
-                    if (btn) {
-                        btn.interactable = true;
-                        btn.node.on('click', () => this.onClaimClicked(quest), this);
-                    }
-                }
+                this.renderTasks();
+            } else {
+                this.showMessage(result.message || '领取失败', true);
             }
-        });
-        
-        console.log('任务列表创建完成');
-        
-        // 滚动到顶部
-        this.scheduleOnce(() => {
-            const scrollView = this.scrollContent?.parent?.getComponent(ScrollView);
-            if (scrollView) {
-                scrollView.scrollToTop();
-            }
-        }, 0.1);
+        } catch (err) {
+            console.error('领取失败:', err);
+            this.showMessage('领取失败', true);
+        }
     }
     
-    onClaimClicked(quest: QuestItem) {
-        console.log('点击领取:', quest.name);
-        if (!quest.completed) {
-            console.log('任务未完成，无法领取');
-            return;
+    showMessage(msg: string, isError: boolean = false) {
+        if (this.messageLabel) {
+            this.messageLabel.string = msg;
+            this.messageLabel.color = isError ? new Color(255, 100, 100) : new Color(100, 255, 100);
+            
+            if (this._messageTimer) {
+                clearTimeout(this._messageTimer);
+            }
+            this._messageTimer = setTimeout(() => {
+                if (this.messageLabel) {
+                    this.messageLabel.string = '';
+                }
+            }, 3000) as any;
         }
-        if (quest.claimed) {
-            console.log('奖励已领取');
-            return;
-        }
-        
-        quest.claimed = true;
-        console.log('领取成功:', quest.name);
     }
 }
