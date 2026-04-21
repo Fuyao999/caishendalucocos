@@ -234,12 +234,12 @@ export class UITemple extends Component {
         }
 
         if (this.storageValueLabel) {
-            this.storageValueLabel.string = templeStorage.toLocaleString();
+            this.storageValueLabel.string = (Number(templeStorage) || 0).toLocaleString();
         }
 
         // 香火状态显示(根据incense_type和incense_end_at判断)
         const now = Date.now();
-        const incenseEndAt = latestData.incense_end_at || 0;
+        const incenseEndAt = Number(latestData.incense_end_at) || 0;
         const isBurning = latestData.incense_type && incenseEndAt && incenseEndAt > now;
         const remainingMs = incenseEndAt - now;
         const remainingHours = Math.max(0, Math.ceil(remainingMs / 3600000));
@@ -307,7 +307,7 @@ export class UITemple extends Component {
                     this.storageValueLabel.string = '0';
                 }
                 if (result.data && result.data.money !== undefined) {
-                    playerData.gold = result.data.money;
+                    playerData.gold = Number(result.data.money) || 0;
                     playerData.temple_storage = 0;
                 }
                 this.updateDisplay();
@@ -459,8 +459,8 @@ export class UITemple extends Component {
         apiCall.then((result: any) => {
             if (result.code === 200 || result.code === 0) {
                 const d = result.data;
-                if (d.newGold !== undefined) gm.networkManager.playerData.gold = d.newGold;
-                if (d.newBanners !== undefined) gm.networkManager.playerData.banners = d.newBanners;
+                if (d.newGold !== undefined) gm.networkManager.playerData.gold = Number(d.newGold) || 0;
+                if (d.newBanners !== undefined) gm.networkManager.playerData.banners = Number(d.newBanners) || 0;
                 if (d.newMerit !== undefined) gm.networkManager.playerData.merit = d.newMerit;
                 if (d.newLevel !== undefined) gm.networkManager.playerData.level = d.newLevel;
                 
@@ -533,7 +533,7 @@ export class UITemple extends Component {
         gm.networkManager.incenseFriend().then((result: any) => {
             if (result.code === 200) {
                 const d = result.data;
-                if (d.newGold !== undefined) gm.networkManager.playerData.gold = d.newGold;
+                if (d.newGold !== undefined) gm.networkManager.playerData.gold = Number(d.newGold) || 0;
                 if (this.resultLabel) this.resultLabel.string = result.message || '代点香成功!';
                 this.updateDisplay();
                 // 更新主界面钱兜兜显示
@@ -651,7 +651,7 @@ export class UITemple extends Component {
         // 计算新的结束时间
         const now = Date.now();
         const addTime = burnTimes[incenseType];
-        const currentEndTime = playerData.incense_end_at || now;
+        const currentEndTime = Number(playerData.incense_end_at) || now;
         let newEndTime = currentEndTime > now ? currentEndTime + addTime : now + addTime;
 
         if (this.resultLabel) {
@@ -833,7 +833,7 @@ export class UITemple extends Component {
             // API成功后，更新本地数据
             playerData.worship_count = (playerData.worship_count || 0) + 1;  // 供奉次数+1
             playerData[invKey] = currentStock - mat.cost;  // 扣材料
-            playerData.gold = (playerData.gold || 0) + reward;  // 加钱(香火钱)
+            playerData.gold = (Number(playerData.gold) || 0) + Number(reward);  // 加钱(香火钱)
             playerData.merit = (playerData.merit || 0) + merit;  // 加功德
 
             // 更新财神庇佑次数(deity_buff可能是JSON字符串,需要解析)
@@ -892,8 +892,15 @@ export class UITemple extends Component {
             const gm = GameManager.instance;
             if (gm?.networkManager) {
                 gm.networkManager.getTempleData().then((result: any) => {
-                    if ((result.code === 0 || result.code === 200) && result.data && this.storageValueLabel) {
-                        this.storageValueLabel.string = (result.data.temple_storage || 0).toLocaleString();
+                    if ((result.code === 0 || result.code === 200) && result.data) {
+                        const newStorage = Number(result.data.temple_storage) || 0;
+                        if (this.storageValueLabel) {
+                            this.storageValueLabel.string = newStorage.toLocaleString();
+                        }
+                        // 同时更新 playerData.temple_storage
+                        if (gm.networkManager.playerData) {
+                            gm.networkManager.playerData.temple_storage = newStorage;
+                        }
                     }
                 }).catch(() => {});
             }

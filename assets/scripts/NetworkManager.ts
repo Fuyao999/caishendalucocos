@@ -124,9 +124,15 @@ export class NetworkManager extends Component {
     }
     
     async syncData(playerData: any): Promise<any> {
+        // 确保数字字段是number类型，防止字符串拼接
+        const data = { ...playerData };
+        data.gold = Number(data.gold) || 0;
+        data.gold_paper = Number(data.gold_paper) || 0;
+        data.fruits = Number(data.fruits) || 0;
+        data.fragments = Number(data.fragments) || 0;
         return this.request('/player/sync-data', {
             method: 'POST',
-            body: JSON.stringify(playerData)
+            body: JSON.stringify(data)
         });
     }
     

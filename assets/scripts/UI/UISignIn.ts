@@ -105,7 +105,15 @@ export class UISignIn extends Component {
                 // 刷新玩家数据
                 gm.networkManager.request('/player/info').then((info: any) => {
                     if (info.code === 200 && info.data) {
-                        gm.networkManager.playerData = info.data;
+                        const p = info.data;
+                        // 确保数字字段是number类型
+                        p.gold = Number(p.gold) || 0;
+                        p.gold_paper = Number(p.gold_paper) || 0;
+                        p.fruits = Number(p.fruits) || 0;
+                        p.fragments = Number(p.fragments) || 0;
+                        p.level = Number(p.level) || 1;
+                        p.merit = Number(p.merit) || 0;
+                        gm.networkManager.playerData = p;
                     }
                 });
             }

@@ -1221,7 +1221,7 @@ export class UIGame extends Component {
                     this.goldLabel.string = '香火钱 ' + r.newGold;
                     // 同步更新 playerData.gold，防止下次 sync 时被旧值覆盖
                     if (gm?.networkManager?.playerData) {
-                        gm.networkManager.playerData.gold = r.newGold;
+                        gm.networkManager.playerData.gold = Number(r.newGold) || 0;
                     }
                     console.log('化缘后更新goldLabel为:', r.newGold, 'netGain:', r.netGain);
                 } else {
@@ -1299,6 +1299,21 @@ export class UIGame extends Component {
 
             if (result && result.code === 200 && result.data) {
                 const p = result.data;
+
+                // 确保数字字段是number类型，防止字符串拼接
+                p.gold = Number(p.gold) || 0;
+                p.gold_paper = Number(p.gold_paper) || 0;
+                p.fruits = Number(p.fruits) || 0;
+                p.incense_sticks = Number(p.incense_sticks) || 0;
+                p.candles = Number(p.candles) || 0;
+                p.mana = Number(p.mana) || 0;
+                p.fragments = Number(p.fragments) || 0;
+                p.level = Number(p.level) || 1;
+                p.exp = Number(p.exp) || 0;
+                p.merit = Number(p.merit) || 0;
+                p.reputation = Number(p.reputation) || 0;
+                p.faith = Number(p.faith) || 0;
+                p.temple_storage = Number(p.temple_storage) || 0;
 
                 // 保存到 networkManager.playerData
                 gm.networkManager.playerData = p;
