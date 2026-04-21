@@ -30691,7 +30691,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -220,
+      "x": -180,
       "y": 0,
       "z": 0
     },
@@ -30730,7 +30730,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 42.255859375,
+      "width": 46.4814453125,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -30763,8 +30763,8 @@
     "_string": "label",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
-    "_fontSize": 20,
+    "_actualFontSize": 22,
+    "_fontSize": 22,
     "_fontFamily": "Arial",
     "_lineHeight": 40,
     "_overflow": 0,
@@ -30916,8 +30916,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": -30,
+      "y": -30,
       "z": 0
     },
     "_lrot": {
@@ -31028,9 +31028,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
+      "r": 133,
+      "g": 133,
+      "b": 133,
       "a": 255
     },
     "_spriteFrame": {
@@ -31089,9 +31089,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
+      "r": 153,
+      "g": 153,
+      "b": 153,
       "a": 255
     },
     "_spriteFrame": {
@@ -31128,7 +31128,7 @@
     },
     "_mode": 0,
     "_totalLength": 300,
-    "_progress": 0.5,
+    "_progress": 1,
     "_reverse": false,
     "_id": "97zkMJYlFCgKJu8e/hAguK"
   },
@@ -31395,7 +31395,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -220,
+      "x": -180,
       "y": 0,
       "z": 0
     },
@@ -31620,8 +31620,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": -30,
+      "y": -30,
       "z": 0
     },
     "_lrot": {
@@ -31732,9 +31732,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
+      "r": 133,
+      "g": 133,
+      "b": 133,
       "a": 255
     },
     "_spriteFrame": {
@@ -31943,7 +31943,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 100,
+      "y": 40,
       "z": 0
     },
     "_lrot": {
@@ -32099,7 +32099,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -220,
+      "x": -180,
       "y": 0,
       "z": 0
     },
@@ -32324,8 +32324,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": -30,
+      "y": -30,
       "z": 0
     },
     "_lrot": {
@@ -32436,9 +32436,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
+      "r": 133,
+      "g": 133,
+      "b": 133,
       "a": 255
     },
     "_spriteFrame": {
@@ -32647,7 +32647,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 50,
+      "y": -40,
       "z": 0
     },
     "_lrot": {
@@ -32803,7 +32803,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -220,
+      "x": -180,
       "y": 0,
       "z": 0
     },
@@ -33028,8 +33028,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": -30,
+      "y": -30,
       "z": 0
     },
     "_lrot": {
@@ -33140,9 +33140,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
+      "r": 133,
+      "g": 133,
+      "b": 133,
       "a": 255
     },
     "_spriteFrame": {
@@ -33351,7 +33351,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": -120,
       "z": 0
     },
     "_lrot": {
@@ -33507,7 +33507,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -220,
+      "x": -180,
       "y": 0,
       "z": 0
     },
@@ -33732,8 +33732,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
+      "x": -30,
+      "y": -30,
       "z": 0
     },
     "_lrot": {
@@ -33844,9 +33844,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
+      "r": 133,
+      "g": 133,
+      "b": 133,
       "a": 255
     },
     "_spriteFrame": {

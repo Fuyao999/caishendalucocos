@@ -185,7 +185,8 @@ export class UITravel extends Component {
                     const btnLabel = btn.node.getComponentInChildren(Label);
                     if (btnLabel) {
                         btnLabel.string = player.hasShield ? '护盾中' : '化缘';
-                        btnLabel.color = new Color(255, 255, 255);
+                        btnLabel.color = new Color(0, 0, 0);
+                        btnLabel.fontSize = 22;
                     }
                     const btnTf = btn.node.getComponent(UITransform);
                     if (btnTf) {
@@ -200,7 +201,8 @@ export class UITravel extends Component {
                     const btnLabel = btn.node.getComponentInChildren(Label);
                     if (btnLabel) {
                         btnLabel.string = '加好友';
-                        btnLabel.color = new Color(255, 255, 255);
+                        btnLabel.color = new Color(0, 0, 0);
+                        btnLabel.fontSize = 18;
                     }
                     const btnTf = btn.node.getComponent(UITransform);
                     if (btnTf) {

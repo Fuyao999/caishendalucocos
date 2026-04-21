@@ -1,4 +1,4 @@
-import { _decorator, Component, Label, Button, Node, Color, Sprite, instantiate } from 'cc';
+import { _decorator, Component, Label, Button, Node, Color, Sprite, instantiate, UITransform } from 'cc';
 import { GameManager } from '../GameManager';
 const { ccclass, property } = _decorator;
 

@@ -507,7 +507,25 @@ export class UIAchievement extends Component {
                 progressLabel.active = false;
             }
             
-            // ProgressBar: 进度条由编辑器控制
+            // ProgressBar: 设置进度条颜色
+            const progressBar = taskNode.getChildByName('ProgressBar');
+            if (progressBar) {
+                progressBar.active = true;
+                const bar = progressBar.getComponent(ProgressBar);
+                const barNode = progressBar.getChildByName('Bar');
+                const sprite = barNode?.getComponent(Sprite);
+                
+                if (quest.completed || quest.claimed) {
+                    // 已完成：绿色填满
+                    if (bar) bar.progress = 1;
+                    if (sprite) sprite.color = new Color(0, 255, 0);
+                } else {
+                    // 未完成：灰色，按实际进度
+                    const progress = quest.target > 0 ? Math.min(quest.progress / quest.target, 1) : 0;
+                    if (bar) bar.progress = progress;
+                    if (sprite) sprite.color = new Color(133, 133, 133);
+                }
+            }
             
             // BonusLabel: 显示奖励（编辑器设置位置）
             const bonusLabel = taskNode.getChildByName('BonusLabel');

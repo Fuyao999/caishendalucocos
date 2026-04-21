@@ -15,7 +15,6 @@ import { UIHour } from './UIHour';
 import { UIInvite } from './UIInvite';
 import { UIFriend } from './UIFriend';
 import { UIMail } from './UIMail';
-import { UITitle } from './UITitle';
 import { UIDecor } from './UIDecor';
 import { UIGuide } from './UIGuide';
 import { UIKaimen } from './UIKaimen';
@@ -194,14 +193,6 @@ export class UIGame extends Component {
     @property(Node)
     mailPanel: Node = null;
 
-    // 称号按钮
-    @property(Button)
-    titleBtn: Button = null;
-
-    // 称号面板
-    @property(Node)
-    titlePanel: Node = null;
-
     // 装饰按钮
     @property(Button)
     decorBtn: Button = null;
@@ -258,7 +249,6 @@ export class UIGame extends Component {
     private _inviteComp: UIInvite = null;
     private _friendComp: any = null;
     private _mailComp: any = null;
-    private _titleComp: any = null;
     private _decorComp: any = null;
     private _guideComp: any = null;
     private _currentAreaIndex: number = 0;
@@ -427,20 +417,6 @@ export class UIGame extends Component {
             this.mailPanel = this.findInScene('MailPanel');
         }
 
-        // 称号按钮
-        const titleBtnNode = this.findInScene('TitleBtn');
-        if (titleBtnNode) {
-            const btn = titleBtnNode.getComponent(Button);
-            if (btn) {
-                btn.node.on('click', this.onTitleClicked, this);
-            }
-        }
-
-        // 称号面板
-        if (!this.titlePanel) {
-            this.titlePanel = this.findInScene('TitlePanel');
-        }
-
         // 装饰按钮
         const decorBtnNode = this.findInScene('DecorBtn');
         if (decorBtnNode) {
@@ -594,11 +570,6 @@ export class UIGame extends Component {
             this._mailComp = this.mailPanel.getComponent(UIMail);
         }
 
-        // 称号面板组件
-        if (this.titlePanel) {
-            this._titleComp = this.titlePanel.getComponent(UITitle);
-        }
-
         // 装饰面板组件
         if (this.decorPanel) {
             this._decorComp = this.decorPanel.getComponent(UIDecor);
@@ -696,7 +667,6 @@ export class UIGame extends Component {
         if (this.invitePanel) this.invitePanel.active = false;
         if (this.friendPanel) this.friendPanel.active = false;
         if (this.mailPanel) this.mailPanel.active = false;
-        if (this.titlePanel) this.titlePanel.active = false;
         if (this.decorPanel) this.decorPanel.active = false;
         if (this.guidePanel) this.guidePanel.active = false;
     }
@@ -1446,13 +1416,6 @@ export class UIGame extends Component {
     onMailClicked() {
         if (this._mailComp) {
             this._mailComp.show();
-        }
-    }
-
-    // 称号按钮点击
-    onTitleClicked() {
-        if (this._titleComp) {
-            this._titleComp.show();
         }
     }
 
