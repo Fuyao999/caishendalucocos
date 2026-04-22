@@ -457,8 +457,25 @@ export class UIQuest extends Component {
 
     // 任务领取点击
     async onTaskClaimClicked(task: TaskData) {
-        this.showMessage('奖励已发放');
-        this.loadActivityData();
+        const gm = GameManager.instance;
+        if (!gm?.networkManager) return;
+
+        try {
+            const result = await gm.networkManager.request('/quests/claim', {
+                method: 'POST',
+                body: JSON.stringify({ quest_id: task.id })
+            });
+
+            if (result.code === 200) {
+                this.showMessage('领取成功');
+                this.loadActivityData();
+            } else {
+                this.showMessage(result.message || '领取失败', true);
+            }
+        } catch (err) {
+            console.error('领取任务奖励失败:', err);
+            this.showMessage('领取失败', true);
+        }
     }
 
     // 任务跳转点击
