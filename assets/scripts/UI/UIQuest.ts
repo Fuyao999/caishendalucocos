@@ -468,11 +468,19 @@ export class UIQuest extends Component {
 
             if (result.code === 200) {
                 this.showMessage('领取成功');
-                this.loadActivityData();
-                // 刷新玩家数据（金币、功德等）
-                if (gm.networkManager.playerData) {
-                    gm.networkManager.syncData(gm.networkManager.playerData).catch(() => {});
+                // 用服务器返回的奖励数据更新本地玩家数据
+                if (result.data?.reward) {
+                    const reward = result.data.reward;
+                    const pd = gm.networkManager.playerData;
+                    if (pd) {
+                        if (reward.gold) pd.gold = Number(pd.gold) + reward.gold;
+                        if (reward.merit) pd.merit = Number(pd.merit) + reward.merit;
+                        if (reward.fragment) pd.fragments = Number(pd.fragments) + reward.fragment;
+                        if (reward.incense) pd.incense_sticks = Number(pd.incense_sticks) + reward.incense;
+                        if (reward.candle) pd.candles = Number(pd.candles) + reward.candle;
+                    }
                 }
+                this.loadActivityData();
             } else {
                 this.showMessage(result.message || '领取失败', true);
             }
