@@ -478,6 +478,8 @@ export class UIQuest extends Component {
                         if (reward.fragment) pd.fragments = Number(pd.fragments) + reward.fragment;
                         if (reward.incense) pd.incense_sticks = Number(pd.incense_sticks) + reward.incense;
                         if (reward.candle) pd.candles = Number(pd.candles) + reward.candle;
+                        // 刷新UI显示
+                        if (gm.uiGame) gm.uiGame.refreshPlayerDisplay();
                     }
                 }
                 this.loadActivityData();

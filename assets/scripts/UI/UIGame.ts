@@ -278,6 +278,19 @@ export class UIGame extends Component {
         // 注册到GameManager
         const gm = GameManager.instance;
         if (gm) gm.uiGame = this;
+    }
+
+    // 刷新玩家数据显示（供其他UI调用）
+    public refreshPlayerDisplay() {
+        const gm = GameManager.instance;
+        const p = gm?.networkManager?.playerData;
+        if (!p) return;
+        if (this.goldLabel) this.goldLabel.string = '香火钱 ' + (Number(p.gold) || 0);
+        if (this.meritLabel) this.meritLabel.string = '功德 ' + (Number(p.merit) || 0);
+        if (this.fragmentsLabel) this.fragmentsLabel.string = '碎片 ' + (Number(p.fragments) || 0);
+        if (this.yuanbaoLabel) this.yuanbaoLabel.string = '元宝 ' + (Number(p.yuanbao) || 0);
+        console.log('refreshPlayerDisplay: gold=', p.gold, 'merit=', p.merit);
+    }
 
         // 清除旧数据
         if (this.nicknameLabel) this.nicknameLabel.string = '';
