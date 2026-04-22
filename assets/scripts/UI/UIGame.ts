@@ -138,6 +138,9 @@ export class UIGame extends Component {
     @property(Button)
     almsResultCloseBtn: Button = null;
 
+    @property(Button)
+    almsShareBtn: Button = null;
+
     @property(Label)
     areaNameLabel: Label = null;
 
@@ -537,6 +540,25 @@ export class UIGame extends Component {
             }
         }
 
+        // 化缘分享按钮
+        const almsShareBtnNode = this.findInScene('AlmsShareBtn');
+        if (almsShareBtnNode) {
+            const btn = almsShareBtnNode.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', this.onAlmsShareClicked, this);
+                this.almsShareBtn = btn;
+                // 设置分享按钮样式
+                const shareLabel = almsShareBtnNode.getChildByName('Label');
+                if (shareLabel) {
+                    const lbl = shareLabel.getComponent(Label);
+                    if (lbl) {
+                        lbl.fontSize = 18;
+                        lbl.color = new Color(255, 255, 255, 255);
+                    }
+                }
+            }
+        }
+
         // 新手引导面板
         if (!this.guidePanel) {
             this.guidePanel = this.findInScene('GuidePanel');
@@ -833,6 +855,44 @@ export class UIGame extends Component {
         } else {
             console.error('事件面板节点未找到!');
         }
+    }
+
+    // 化缘结果分享按钮
+    async onAlmsShareClicked() {
+        console.log('点击化缘结果分享按钮');
+        try {
+            const gm = GameManager.instance;
+            if (!gm?.networkManager) return;
+
+            // 调用分享接口更新任务进度
+            const result = await gm.networkManager.request('/activity/share', {
+                method: 'POST'
+            });
+
+            if (result.code === 200) {
+                // 触发系统分享
+                if (typeof wx !== 'undefined' && wx.shareAppMessage) {
+                    wx.shareAppMessage({
+                        title: '财神大陆 - 化缘大吉',
+                        content: '我在财神大陆化缘出了大吉，你也来试试！',
+                        imageUrl: ''
+                    });
+                } else if (navigator.share) {
+                    navigator.share({
+                        title: '财神大陆',
+                        text: '我在财神大陆化缘出了大吉，你也来试试！'
+                    });
+                } else {
+                    this.showToast('分享成功！');
+                }
+            }
+        } catch (err) {
+            console.error('分享失败:', err);
+            this.showToast('分享失败');
+        }
+
+        // 关闭结果面板
+        this.onAlmsResultCloseClicked();
     }
 
     onCloseAreaClicked() {
