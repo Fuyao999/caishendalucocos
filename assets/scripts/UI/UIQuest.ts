@@ -469,6 +469,10 @@ export class UIQuest extends Component {
             if (result.code === 200) {
                 this.showMessage('领取成功');
                 this.loadActivityData();
+                // 刷新玩家数据（金币、功德等）
+                if (gm.networkManager.playerData) {
+                    gm.networkManager.syncData(gm.networkManager.playerData).catch(() => {});
+                }
             } else {
                 this.showMessage(result.message || '领取失败', true);
             }
