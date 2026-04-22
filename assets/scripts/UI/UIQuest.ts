@@ -57,14 +57,22 @@ export class UIQuest extends Component {
     private dailyTaskContent: Node = null;
     private dailyTaskTemplate: Node = null;
     private dailyActivityLabel: Label = null;
-    private dailyProgressBar: Node = null;
-    private dailyReward1Btn: Button = null;
-    private dailyReward2Btn: Button = null;
-    private dailyReward3Btn: Button = null;
     private weeklyActivityLabel: Label = null;
-    private weeklyReward1Btn: Button = null;
-    private weeklyReward2Btn: Button = null;
-    private weeklyReward3Btn: Button = null;
+
+    // 里程碑节点
+    private dailyMilestonePanel: Node = null;
+    private dailyProgressBg: Node = null;
+    private dailyProgressFill: Node = null;
+    private dailyMilestones: Node[] = [];
+    private dailyMilestoneLabels: Label[] = [];
+    private dailyMilestoneRewards: Label[] = [];
+
+    private weeklyMilestonePanel: Node = null;
+    private weeklyProgressBg: Node = null;
+    private weeklyProgressFill: Node = null;
+    private weeklyMilestones: Node[] = [];
+    private weeklyMilestoneLabels: Label[] = [];
+    private weeklyMilestoneRewards: Label[] = [];
 
     // 数据
     private _activityData: ActivityData = null;
@@ -127,28 +135,58 @@ export class UIQuest extends Component {
         this.initNodes();
         this.renderDailyTasks();
         this.renderDailyActivity();
-        this.renderDailyRewards();
         this.renderWeeklyActivity();
-        this.renderWeeklyRewards();
     }
 
     // 初始化节点引用
     initNodes() {
         if (!this.questPanel) return;
 
+        // 任务相关
         this.dailyTaskContent = this.questPanel.getChildByName('DailyTaskContent');
         this.dailyTaskTemplate = this.questPanel.getChildByName('DailyTaskItem');
 
-
+        // 活跃度文字
         this.dailyActivityLabel = this.questPanel.getChildByName('DailyActivityLabel')?.getComponent(Label);
-        this.dailyProgressBar = this.questPanel.getChildByName('DailyProgressBar');
-        this.dailyReward1Btn = this.questPanel.getChildByName('DailyReward1Btn')?.getComponent(Button);
-        this.dailyReward2Btn = this.questPanel.getChildByName('DailyReward2Btn')?.getComponent(Button);
-        this.dailyReward3Btn = this.questPanel.getChildByName('DailyReward3Btn')?.getComponent(Button);
         this.weeklyActivityLabel = this.questPanel.getChildByName('WeeklyActivityLabel')?.getComponent(Label);
-        this.weeklyReward1Btn = this.questPanel.getChildByName('WeeklyReward1Btn')?.getComponent(Button);
-        this.weeklyReward2Btn = this.questPanel.getChildByName('WeeklyReward2Btn')?.getComponent(Button);
-        this.weeklyReward3Btn = this.questPanel.getChildByName('WeeklyReward3Btn')?.getComponent(Button);
+
+        // 日里程碑
+        this.dailyMilestonePanel = this.questPanel.getChildByName('DailyMilestonePanel');
+        if (this.dailyMilestonePanel) {
+            this.dailyProgressBg = this.dailyMilestonePanel.getChildByName('DailyProgressBg');
+            this.dailyProgressFill = this.dailyMilestonePanel.getChildByName('DailyProgressFill');
+            for (let i = 1; i <= 3; i++) {
+                const milestone = this.dailyMilestonePanel.getChildByName(`DailyMilestone${i}`);
+                if (milestone) {
+                    this.dailyMilestones.push(milestone);
+                    const label = milestone.getChildByName(`DailyMilestone${i}Label`)?.getComponent(Label);
+                    const reward = milestone.getChildByName(`DailyMilestone${i}Reward`)?.getComponent(Label);
+                    this.dailyMilestoneLabels.push(label);
+                    this.dailyMilestoneRewards.push(reward);
+                    // 添加点击事件
+                    milestone.on(Node.EventType.TOUCH_END, () => this.onDailyMilestoneClick(i - 1));
+                }
+            }
+        }
+
+        // 周里程碑
+        this.weeklyMilestonePanel = this.questPanel.getChildByName('WeeklyMilestonePanel');
+        if (this.weeklyMilestonePanel) {
+            this.weeklyProgressBg = this.weeklyMilestonePanel.getChildByName('WeeklyProgressBg');
+            this.weeklyProgressFill = this.weeklyMilestonePanel.getChildByName('WeeklyProgressFill');
+            for (let i = 1; i <= 3; i++) {
+                const milestone = this.weeklyMilestonePanel.getChildByName(`WeeklyMilestone${i}`);
+                if (milestone) {
+                    this.weeklyMilestones.push(milestone);
+                    const label = milestone.getChildByName(`WeeklyMilestone${i}Label`)?.getComponent(Label);
+                    const reward = milestone.getChildByName(`WeeklyMilestone${i}Reward`)?.getComponent(Label);
+                    this.weeklyMilestoneLabels.push(label);
+                    this.weeklyMilestoneRewards.push(reward);
+                    // 添加点击事件
+                    milestone.on(Node.EventType.TOUCH_END, () => this.onWeeklyMilestoneClick(i - 1));
+                }
+            }
+        }
     }
 
     // 渲染每日任务
@@ -162,14 +200,26 @@ export class UIQuest extends Component {
         this.dailyTaskContent.removeAllChildren();
 
         const tasks = this._activityData.tasks || [];
+        const itemHeight = 35; // 每个任务项的高度
+        const startY = -180; // 起始Y位置
 
         tasks.forEach((task, index) => {
             const itemNode = this.createTaskItem(task, index);
             if (itemNode) {
-                itemNode.setPosition(0, -index * 50, 0);
+                // 先重置位置，再设置父节点，最后设置正确位置
+                itemNode.setPosition(0, 0, 0);
                 itemNode.setParent(this.dailyTaskContent);
+                itemNode.setPosition(0, startY - index * itemHeight, 0);
             }
         });
+
+        // 更新 Content 高度，让 ScrollView 能滚动
+        const totalHeight = tasks.length * itemHeight;
+        const contentTransform = this.dailyTaskContent.getComponent(UITransform);
+        if (contentTransform) {
+            const currentWidth = contentTransform.contentSize.width;
+            contentTransform.setContentSize(currentWidth, totalHeight);
+        }
     }
 
     // 创建任务项
@@ -266,83 +316,73 @@ export class UIQuest extends Component {
     }
 
     // 渲染每日活跃
-    renderDailyActivity() {
+        renderDailyActivity() {
         if (!this.dailyActivityLabel || !this._activityData) return;
 
         const activity = this._activityData.daily_activity || 0;
-        this.dailyActivityLabel.string = `今日活跃:${activity} / 110`;
+        this.dailyActivityLabel.string = `今日活跃: ${activity}`;
 
-        // 设置进度条
-        this.updateProgressBar(this.dailyProgressBar, activity / 110);
+        // 渲染日里程碑
+        this.renderDailyMilestones();
     }
 
-    // 更新进度条
-    updateProgressBar(barNode: Node, progress: number) {
-        if (!barNode) return;
+    // 渲染日里程碑
+    renderDailyMilestones() {
+        if (!this._activityData || !this.dailyMilestones.length) return;
 
-        progress = Math.min(Math.max(progress, 0), 1);
+        const activity = this._activityData.daily_activity || 0;
+        const rewards = this._activityData.daily_rewards || [];
+        const maxActivity = 110;
 
-        const bar = barNode.getComponent(ProgressBar);
-        if (bar) {
-            bar.progress = progress;
-        }
-
-        const barChild = barNode.getChildByName('Bar');
-        if (barChild) {
-            const sprite = barChild.getComponent(Sprite);
-            if (sprite) {
-                if (progress >= 1) {
-                    sprite.color = new Color(0, 255, 0);
-                } else if (progress >= 0.5) {
-                    sprite.color = new Color(255, 200, 0);
-                } else {
-                    sprite.color = new Color(255, 100, 100);
+        // 更新进度条
+        if (this.dailyProgressFill) {
+            const progress = Math.min(activity / maxActivity, 1);
+            const transform = this.dailyProgressFill.getComponent(UITransform);
+            if (transform) {
+                const bgTransform = this.dailyProgressBg?.getComponent(UITransform);
+                if (bgTransform) {
+                    const bgWidth = bgTransform.contentSize.width;
+                    transform.setContentSize(bgWidth * progress, transform.contentSize.height);
                 }
             }
         }
-    }
 
-    // 渲染每日奖励
-    renderDailyRewards() {
-        if (!this._activityData) return;
-
-        const rewards = this._activityData.daily_rewards || [];
-        const buttons = [this.dailyReward1Btn, this.dailyReward2Btn, this.dailyReward3Btn];
-
+        // 更新里程碑状态
         rewards.slice(0, 3).forEach((reward, index) => {
-            this.renderRewardBtn(buttons[index], reward, 'daily');
+            if (index >= this.dailyMilestones.length) return;
+
+            const milestone = this.dailyMilestones[index];
+            const label = this.dailyMilestoneLabels[index];
+            const rewardLabel = this.dailyMilestoneRewards[index];
+
+            // 更新数值
+            if (label) {
+                label.string = `${reward.activity_point}`;
+            }
+
+            // 更新奖励文字
+            if (rewardLabel) {
+                let rewardStr = '';
+                if (reward.reward_gold > 0) rewardStr += `${reward.reward_gold}钱`;
+                if (reward.reward_fragment > 0) rewardStr += `+${reward.reward_fragment}碎`;
+                if (reward.reward_fruit > 0) rewardStr += `+${reward.reward_fruit}供`;
+                rewardLabel.string = rewardStr;
+            }
+
+            // 更新里程碑图标状态
+            if (milestone) {
+                const sprite = milestone.getComponent(Sprite);
+                if (sprite) {
+                    if (reward.claimed) {
+                        sprite.color = new Color(128, 128, 128); // 已领取-灰色
+                    } else if (reward.reached) {
+                        sprite.color = new Color(255, 215, 0); // 可领取-金色
+                    } else {
+                        sprite.color = new Color(100, 100, 100); // 未达到-暗色
+                    }
+                }
+            }
         });
-    }
-
-    // 渲染奖励按钮
-    renderRewardBtn(btn: Button, reward: RewardData, type: 'daily' | 'weekly') {
-        if (!btn) return;
-
-        const label = btn.getComponent(Label);
-        if (!label) return;
-
-        // 构建奖励文字
-        let rewardStr = `${reward.activity_point}活跃:`;
-        if (reward.reward_gold > 0) rewardStr += `${reward.reward_gold}钱`;
-        if (reward.reward_fragment > 0) rewardStr += `+${reward.reward_fragment}碎`;
-        if (reward.reward_fruit > 0) rewardStr += `+${reward.reward_fruit}供`;
-
-        // 添加状态
-        if (reward.claimed) {
-            label.string = rewardStr + ' [已领]';
-            label.color = new Color(128, 128, 128);
-            btn.interactable = false;
-        } else if (reward.reached) {
-            label.string = rewardStr + ' [可领]';
-            label.color = new Color(0, 255, 0);
-            btn.interactable = true;
-            btn.node.off('click');
-            btn.node.on('click', () => this.onRewardClicked(reward, type), this);
-        } else {
-            label.string = rewardStr + ' [未达]';
-            label.color = new Color(128, 128, 128);
-            btn.interactable = false;
-        }
     }
 
     // 渲染每周活跃
@@ -350,18 +390,68 @@ export class UIQuest extends Component {
         if (!this.weeklyActivityLabel || !this._activityData) return;
 
         const activity = this._activityData.weekly_activity || 0;
-        this.weeklyActivityLabel.string = `本周活跃:${activity} / 875`;
+        this.weeklyActivityLabel.string = `当前周活跃: ${activity}`;
+
+        // 渲染周里程碑
+        this.renderWeeklyMilestones();
     }
 
-    // 渲染每周奖励
-    renderWeeklyRewards() {
-        if (!this._activityData) return;
+    // 渲染周里程碑
+    renderWeeklyMilestones() {
+        if (!this._activityData || !this.weeklyMilestones.length) return;
 
+        const activity = this._activityData.weekly_activity || 0;
         const rewards = this._activityData.weekly_rewards || [];
-        const buttons = [this.weeklyReward1Btn, this.weeklyReward2Btn, this.weeklyReward3Btn];
+        const maxActivity = 875;
 
+        // 更新进度条
+        if (this.weeklyProgressFill) {
+            const progress = Math.min(activity / maxActivity, 1);
+            const transform = this.weeklyProgressFill.getComponent(UITransform);
+            if (transform) {
+                const bgTransform = this.weeklyProgressBg?.getComponent(UITransform);
+                if (bgTransform) {
+                    const bgWidth = bgTransform.contentSize.width;
+                    transform.setContentSize(bgWidth * progress, transform.contentSize.height);
+                }
+            }
+        }
+
+        // 更新里程碑状态
         rewards.slice(0, 3).forEach((reward, index) => {
-            this.renderRewardBtn(buttons[index], reward, 'weekly');
+            if (index >= this.weeklyMilestones.length) return;
+
+            const milestone = this.weeklyMilestones[index];
+            const label = this.weeklyMilestoneLabels[index];
+            const rewardLabel = this.weeklyMilestoneRewards[index];
+
+            // 更新数值
+            if (label) {
+                label.string = `${reward.activity_point}`;
+            }
+
+            // 更新奖励文字
+            if (rewardLabel) {
+                let rewardStr = '';
+                if (reward.reward_gold > 0) rewardStr += `${reward.reward_gold}钱`;
+                if (reward.reward_fragment > 0) rewardStr += `+${reward.reward_fragment}碎`;
+                if (reward.reward_fruit > 0) rewardStr += `+${reward.reward_fruit}供`;
+                rewardLabel.string = rewardStr;
+            }
+
+            // 更新里程碑图标状态
+            if (milestone) {
+                const sprite = milestone.getComponent(Sprite);
+                if (sprite) {
+                    if (reward.claimed) {
+                        sprite.color = new Color(128, 128, 128); // 已领取-灰色
+                    } else if (reward.reached) {
+                        sprite.color = new Color(255, 215, 0); // 可领取-金色
+                    } else {
+                        sprite.color = new Color(100, 100, 100); // 未达到-暗色
+                    }
+                }
+            }
         });
     }
 
@@ -432,6 +522,48 @@ export class UIQuest extends Component {
         } catch (err) {
             console.error('领取奖励失败:', err);
             this.showMessage('领取失败', true);
+        }
+    }
+
+    // 日里程碑点击
+    async onDailyMilestoneClick(index: number) {
+        if (!this._activityData) return;
+        const rewards = this._activityData.daily_rewards || [];
+        if (index >= rewards.length) return;
+
+        const reward = rewards[index];
+        if (reward.claimed) {
+            this.showMessage('已领取');
+        } else if (reward.reached) {
+            await this.onRewardClicked(reward, 'daily');
+        } else {
+            // 显示奖励内容
+            let rewardStr = '';
+            if (reward.reward_gold > 0) rewardStr += `${reward.reward_gold}钱`;
+            if (reward.reward_fragment > 0) rewardStr += `+${reward.reward_fragment}碎`;
+            if (reward.reward_fruit > 0) rewardStr += `+${reward.reward_fruit}供`;
+            this.showMessage(`需要${reward.activity_point}活跃，当前${this._activityData.daily_activity}，奖励: ${rewardStr}`);
+        }
+    }
+
+    // 周里程碑点击
+    async onWeeklyMilestoneClick(index: number) {
+        if (!this._activityData) return;
+        const rewards = this._activityData.weekly_rewards || [];
+        if (index >= rewards.length) return;
+
+        const reward = rewards[index];
+        if (reward.claimed) {
+            this.showMessage('已领取');
+        } else if (reward.reached) {
+            await this.onRewardClicked(reward, 'weekly');
+        } else {
+            // 显示奖励内容
+            let rewardStr = '';
+            if (reward.reward_gold > 0) rewardStr += `${reward.reward_gold}钱`;
+            if (reward.reward_fragment > 0) rewardStr += `+${reward.reward_fragment}碎`;
+            if (reward.reward_fruit > 0) rewardStr += `+${reward.reward_fruit}供`;
+            this.showMessage(`需要${reward.activity_point}活跃，当前${this._activityData.weekly_activity}，奖励: ${rewardStr}`);
         }
     }
 
