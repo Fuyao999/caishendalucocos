@@ -51,26 +51,42 @@ export class UIAgent extends Component {
         }
         if (this.myDataBtn) {
             const btn = this.myDataBtn.getComponent(Button);
+            console.log('myDataBtn btn=', btn);
             if (btn) {
-                btn.node.on('click', () => this.updateUI(), this);
+                btn.node.on('click', () => {
+                    console.log('点击了 myDataBtn');
+                    this.updateUI();
+                }, this);
             }
         }
         if (this.myTeamBtn) {
             const btn = this.myTeamBtn.getComponent(Button);
+            console.log('myTeamBtn btn=', btn);
             if (btn) {
-                btn.node.on('click', () => this.showMyTeamPanel(), this);
+                btn.node.on('click', () => {
+                    console.log('点击了 myTeamBtn');
+                    this.showMyTeamPanel();
+                }, this);
             }
         }
         if (this.commissionBtn) {
             const btn = this.commissionBtn.getComponent(Button);
+            console.log('commissionBtn btn=', btn);
             if (btn) {
-                btn.node.on('click', () => this.showCommissionPanel(), this);
+                btn.node.on('click', () => {
+                    console.log('点击了 commissionBtn');
+                    this.showCommissionPanel();
+                }, this);
             }
         }
         if (this.withdrawBtn) {
             const btn = this.withdrawBtn.getComponent(Button);
+            console.log('withdrawBtn btn=', btn);
             if (btn) {
-                btn.node.on('click', () => this.showWithdrawPanel(), this);
+                btn.node.on('click', () => {
+                    console.log('点击了 withdrawBtn');
+                    this.showWithdrawPanel();
+                }, this);
             }
         }
     }
