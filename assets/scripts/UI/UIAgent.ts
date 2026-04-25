@@ -216,11 +216,17 @@ export class UIAgent extends Component {
         activateBtnSprite.color = new Color(233, 69, 96);
         const activateBtnTransform = activateBtn.addComponent(UITransform);
         activateBtnTransform.setContentSize(200, 50);
-        const activateBtnLabel = activateBtn.addComponent(Label);
+        
+        // 文字标签节点（避免Sprite和Label冲突）
+        const activateBtnLabelNode = new Node('Label');
+        activateBtnLabelNode.setParent(activateBtn);
+        activateBtnLabelNode.setPosition(0, 0, 0);
+        const activateBtnLabel = activateBtnLabelNode.addComponent(Label);
         activateBtnLabel.string = '立即激活';
         activateBtnLabel.fontSize = 20;
         activateBtnLabel.color = new Color(255, 255, 255);
         activateBtnLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
+        activateBtnLabel.verticalAlign = Label.VerticalAlign.CENTER;
         
         const activateBtnComp = activateBtn.addComponent(Button);
         activateBtnComp.interactable = true;
@@ -237,11 +243,17 @@ export class UIAgent extends Component {
         backBtnSprite.color = new Color(60, 60, 80);
         const backBtnTransform = backBtn.addComponent(UITransform);
         backBtnTransform.setContentSize(120, 40);
-        const backBtnLabel = backBtn.addComponent(Label);
+        
+        // 文字标签节点
+        const backBtnLabelNode = new Node('Label');
+        backBtnLabelNode.setParent(backBtn);
+        backBtnLabelNode.setPosition(0, 0, 0);
+        const backBtnLabel = backBtnLabelNode.addComponent(Label);
         backBtnLabel.string = '返回';
         backBtnLabel.fontSize = 16;
         backBtnLabel.color = new Color(200, 200, 200);
         backBtnLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
+        backBtnLabel.verticalAlign = Label.VerticalAlign.CENTER;
         
         const backBtnComp = backBtn.addComponent(Button);
         backBtnComp.interactable = true;
@@ -431,11 +443,17 @@ export class UIAgent extends Component {
         const transform = btn.addComponent(UITransform);
         transform.setContentSize(160, 45);
         
-        const label = btn.addComponent(Label);
+        // 创建子节点用于显示文字（避免Sprite和Label冲突）
+        const labelNode = new Node('Label');
+        labelNode.setParent(btn);
+        labelNode.setPosition(0, 0, 0);
+        
+        const label = labelNode.addComponent(Label);
         label.string = text;
         label.fontSize = 18;
         label.color = new Color(255, 255, 255);
         label.horizontalAlign = Label.HorizontalAlign.CENTER;
+        label.verticalAlign = Label.VerticalAlign.CENTER;
         
         const button = btn.addComponent(Button);
         button.interactable = true;
