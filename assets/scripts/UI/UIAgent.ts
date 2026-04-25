@@ -35,6 +35,38 @@ export class UIAgent extends Component {
     start() {
         console.log('UIAgent start');
         this.hide();
+
+        // 绑定主面板按钮点击事件
+        if (this.activateBtn) {
+            const btn = this.activateBtn.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', () => this.showActivatePanel(), this);
+            }
+        }
+        if (this.myDataBtn) {
+            const btn = this.myDataBtn.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', () => this.updateUI(), this);
+            }
+        }
+        if (this.myTeamBtn) {
+            const btn = this.myTeamBtn.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', () => this.showMyTeamPanel(), this);
+            }
+        }
+        if (this.commissionBtn) {
+            const btn = this.commissionBtn.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', () => this.showCommissionPanel(), this);
+            }
+        }
+        if (this.withdrawBtn) {
+            const btn = this.withdrawBtn.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', () => this.showWithdrawPanel(), this);
+            }
+        }
     }
     
     show() {
