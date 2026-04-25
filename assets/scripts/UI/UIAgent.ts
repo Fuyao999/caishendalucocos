@@ -60,7 +60,7 @@ export class UIAgent extends Component {
     async loadAgentData() {
         try {
             const gm = GameManager.instance;
-            const response = await fetch(`${gm.apiBaseUrl}/agent/my-data`, {
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/my-data`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${gm.dataManager.get('token')}`
@@ -417,7 +417,7 @@ export class UIAgent extends Component {
         
         try {
             const gm = GameManager.instance;
-            const response = await fetch(`${gm.apiBaseUrl}/agent/my-team`, {
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/my-team`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${gm.dataManager.get('token')}`
@@ -502,7 +502,7 @@ export class UIAgent extends Component {
         
         try {
             const gm = GameManager.instance;
-            const response = await fetch(`${gm.apiBaseUrl}/agent/commission-records?limit=50`, {
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/commission-records?limit=50`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${gm.dataManager.get('token')}`
@@ -618,7 +618,7 @@ export class UIAgent extends Component {
         
         try {
             const gm = GameManager.instance;
-            const response = await fetch(`${gm.apiBaseUrl}/agent/withdraw-records`, {
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/withdraw-records`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${gm.dataManager.get('token')}`
