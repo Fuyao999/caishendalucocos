@@ -19,6 +19,7 @@ import { UIDecor } from './UIDecor';
 import { UIGuide } from './UIGuide';
 import { UIKaimen } from './UIKaimen';
 import { UISettings } from './UISettings';
+import { UIAgent } from './UIAgent';
 const { ccclass, property } = _decorator;
 
 @ccclass('UIGame')
@@ -691,6 +692,15 @@ export class UIGame extends Component {
         if (this.mailPanel) this.mailPanel.active = false;
         if (this.decorPanel) this.decorPanel.active = false;
         if (this.guidePanel) this.guidePanel.active = false;
+
+        // 代理按钮
+        const agentBtnNode = this.findInScene('AgentBtn');
+        if (agentBtnNode) {
+            const btn = agentBtnNode.getComponent(Button);
+            if (btn) {
+                btn.node.on('click', this.onAgentClicked, this);
+            }
+        }
     }
 
     // 绑定区域选择面板按钮事件
@@ -1638,6 +1648,21 @@ export class UIGame extends Component {
             this.hideSettings();
         } else {
             this.showSettings();
+        }
+    }
+
+    // 代理按钮点击
+    onAgentClicked() {
+        const agentPanelNode = this.findInScene('AgentPanel');
+        if (agentPanelNode) {
+            const uiAgent = agentPanelNode.getComponent(UIAgent);
+            if (uiAgent) {
+                if (agentPanelNode.active) {
+                    uiAgent.hide();
+                } else {
+                    uiAgent.show();
+                }
+            }
         }
     }
 }
