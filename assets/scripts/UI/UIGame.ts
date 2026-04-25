@@ -233,6 +233,13 @@ export class UIGame extends Component {
     @property(Node)
     guidePanel: Node = null;
 
+    // 代理面板
+    @property(Node)
+    agentButton: Node = null;
+
+    @property(Node)
+    agentPanel: Node = null;
+
 
     // 区域选择面板（使用编辑器绑定的 areaSelectPanel）
 
@@ -694,9 +701,8 @@ export class UIGame extends Component {
         if (this.guidePanel) this.guidePanel.active = false;
 
         // 代理按钮
-        const agentBtnNode = this.findInScene('AgentBtn');
-        if (agentBtnNode) {
-            const btn = agentBtnNode.getComponent(Button);
+        if (this.agentButton) {
+            const btn = this.agentButton.getComponent(Button);
             if (btn) {
                 btn.node.on('click', this.onAgentClicked, this);
             }
@@ -1653,11 +1659,10 @@ export class UIGame extends Component {
 
     // 代理按钮点击
     onAgentClicked() {
-        const agentPanelNode = this.findInScene('AgentPanel');
-        if (agentPanelNode) {
-            const uiAgent = agentPanelNode.getComponent(UIAgent);
+        if (this.agentPanel) {
+            const uiAgent = this.agentPanel.getComponent(UIAgent);
             if (uiAgent) {
-                if (agentPanelNode.active) {
+                if (this.agentPanel.active) {
                     uiAgent.hide();
                 } else {
                     uiAgent.show();
