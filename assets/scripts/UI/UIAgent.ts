@@ -298,10 +298,12 @@ export class UIAgent extends Component {
             const token = gm.networkManager.getToken();
             console.log('loadAgentData token:', token ? '有token' : '无token');
             
-            const response = await fetch(`${gm.networkManager._baseUrl}/agent/my-data`, {
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/my-data?t=${Date.now()}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
                 },
                 credentials: 'include'
             });
