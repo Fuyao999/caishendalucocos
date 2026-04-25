@@ -172,14 +172,32 @@ export class UIAgent extends Component {
     @property(Label)
     serviceLabel: Label = null;
     
+    // 关闭按钮
+    @property(Button)
+    closeBtn: Button = null;
+
+    // 提示文字
+    @property(Label)
+    messageLabel: Label = null;
+
     // 代理数据
     private _agentData: any = null;
     private _isAgent: boolean = false;
     
     start() {
         console.log('UIAgent start');
+        this.initPanels();
         this.hide();
         this.bindEvents();
+    }
+
+    // 初始化面板状态
+    initPanels() {
+        // 默认显示非代理界面
+        if (this.nonAgentContainer) this.nonAgentContainer.active = true;
+        if (this.agentContainer) this.agentContainer.active = false;
+        // 隐藏所有子面板
+        this.hideAllSubPanels();
     }
     
     show() {
@@ -197,6 +215,11 @@ export class UIAgent extends Component {
     
     // 绑定所有按钮事件
     bindEvents() {
+        // 关闭按钮
+        if (this.closeBtn) {
+            this.closeBtn.node.on(Node.EventType.TOUCH_END, () => this.hide());
+        }
+
         // NonAgentContainer
         if (this.becomeAgentBtn) {
             this.becomeAgentBtn.node.on(Node.EventType.TOUCH_END, () => this.showActivatePanel());
@@ -272,20 +295,29 @@ export class UIAgent extends Component {
     async loadAgentData() {
         try {
             const gm = GameManager.instance;
+            const token = gm.networkManager.getToken();
+            console.log('loadAgentData token:', token ? '有token' : '无token');
+            
             const response = await fetch(`${gm.networkManager._baseUrl}/agent/my-data`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${gm.dataManager.get('token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 credentials: 'include'
             });
             const data = await response.json();
+            console.log('loadAgentData response:', JSON.stringify(data));
             
             if (data.code === 0) {
                 this._agentData = data.data;
                 this._isAgent = data.data.is_agent;
-                this.updateUI();
+                console.log('agent data loaded, is_agent:', this._isAgent);
+            } else {
+                console.log('API返回错误:', data.message, 'code:', data.code);
+                // 默认不是代理
+                this._isAgent = false;
             }
+            this.updateUI();
         } catch (e) {
             console.error('加载代理数据失败:', e);
         }
@@ -293,6 +325,7 @@ export class UIAgent extends Component {
     
     // 更新UI显示
     updateUI() {
+        console.log('updateUI called, _isAgent:', this._isAgent);
         if (this._isAgent) {
             this.showMainPanel();
         } else {
@@ -354,8 +387,16 @@ export class UIAgent extends Component {
         const code = this.codeEditBox?.string?.trim() || '';
         const invite = this.inviteEditBox?.string?.trim() || '';
         
-        if (!code || !invite) {
-            console.log('请输入激活码和邀请码');
+        if (!code && !invite) {
+            this.showToast('请输入激活码和邀请码');
+            return;
+        }
+        if (!code) {
+            this.showToast('请输入激活码');
+            return;
+        }
+        if (!invite) {
+            this.showToast('请输入邀请码');
             return;
         }
         
@@ -364,7 +405,7 @@ export class UIAgent extends Component {
             const response = await fetch(`${gm.networkManager._baseUrl}/agent/activate`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${gm.dataManager.get('token')}`,
+                    'Authorization': `Bearer ${gm.networkManager.getToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ activation_code: code, invite_code: invite })
@@ -377,7 +418,15 @@ export class UIAgent extends Component {
                 this.loadAgentData();
             } else {
                 console.log('激活失败:', data.message);
-                this.showToast(data.message || '激活失败');
+                const msg = data.message || '';
+                // 根据错误信息显示更友好的提示
+                if (msg.includes('激活码') || msg.includes('无效') || msg.includes('已使用')) {
+                    this.showToast('请输入有效激活码');
+                } else if (msg.includes('邀请码') || msg.includes('邀请')) {
+                    this.showToast('请输入有效邀请码');
+                } else {
+                    this.showToast(msg || '激活失败');
+                }
             }
         } catch (e) {
             console.error('激活失败:', e);
@@ -478,7 +527,7 @@ export class UIAgent extends Component {
             const response = await fetch(`${gm.networkManager._baseUrl}/agent/team-detail?level=${level}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${gm.dataManager.get('token')}`
+                    'Authorization': `Bearer ${gm.networkManager.getToken()}`
                 }
             });
             const data = await response.json();
@@ -596,7 +645,7 @@ export class UIAgent extends Component {
         const endDate = this.endDateEditBox?.string?.trim() || '';
         
         if (!startDate || !endDate) {
-            console.log('请输入起止日期');
+            this.showToast('请输入起止日期');
             return;
         }
         
@@ -605,7 +654,7 @@ export class UIAgent extends Component {
             const response = await fetch(`${gm.networkManager._baseUrl}/agent/sales?start=${startDate}&end=${endDate}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${gm.dataManager.get('token')}`
+                    'Authorization': `Bearer ${gm.networkManager.getToken()}`
                 }
             });
             const data = await response.json();
@@ -645,7 +694,7 @@ export class UIAgent extends Component {
         const amount = this.amountEditBox?.string?.trim() || '';
         
         if (!amount) {
-            console.log('请输入提现金额');
+            this.showToast('请输入提现金额');
             return;
         }
         
@@ -654,7 +703,7 @@ export class UIAgent extends Component {
             const response = await fetch(`${gm.networkManager._baseUrl}/agent/withdraw`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${gm.dataManager.get('token')}`,
+                    'Authorization': `Bearer ${gm.networkManager.getToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ amount: parseFloat(amount) })
@@ -680,6 +729,20 @@ export class UIAgent extends Component {
     
     // 显示提示
     showToast(message: string) {
-        console.log('Toast:', message);
+        if (this.messageLabel) {
+            this.messageLabel.string = message;
+            this.messageLabel.node.active = true;
+            // 确保显示在最上层
+            this.messageLabel.node.setSiblingIndex(9999);
+            
+            // 2秒后自动隐藏
+            this.scheduleOnce(() => {
+                if (this.messageLabel) {
+                    this.messageLabel.node.active = false;
+                }
+            }, 2);
+        } else {
+            console.log('Toast:', message);
+        }
     }
 }
