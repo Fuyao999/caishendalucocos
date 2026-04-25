@@ -40,54 +40,34 @@ export class UIAgent extends Component {
         console.log('绑定代理按钮: activateBtn=', this.activateBtn, 'myDataBtn=', this.myDataBtn);
         
         if (this.activateBtn) {
-            const btn = this.activateBtn.getComponent(Button);
-            console.log('activateBtn btn=', btn);
-            if (btn) {
-                btn.node.on('click', () => {
-                    console.log('点击了 activateBtn');
-                    this.showActivatePanel();
-                }, this);
-            }
+            this.activateBtn.on(Node.EventType.TOUCH_END, () => {
+                console.log('点击了 activateBtn');
+                this.showActivatePanel();
+            });
         }
         if (this.myDataBtn) {
-            const btn = this.myDataBtn.getComponent(Button);
-            console.log('myDataBtn btn=', btn);
-            if (btn) {
-                btn.node.on('click', () => {
-                    console.log('点击了 myDataBtn');
-                    this.updateUI();
-                }, this);
-            }
+            this.myDataBtn.on(Node.EventType.TOUCH_END, () => {
+                console.log('点击了 myDataBtn');
+                this.updateUI();
+            });
         }
         if (this.myTeamBtn) {
-            const btn = this.myTeamBtn.getComponent(Button);
-            console.log('myTeamBtn btn=', btn);
-            if (btn) {
-                btn.node.on('click', () => {
-                    console.log('点击了 myTeamBtn');
-                    this.showMyTeamPanel();
-                }, this);
-            }
+            this.myTeamBtn.on(Node.EventType.TOUCH_END, () => {
+                console.log('点击了 myTeamBtn');
+                this.showMyTeamPanel();
+            });
         }
         if (this.commissionBtn) {
-            const btn = this.commissionBtn.getComponent(Button);
-            console.log('commissionBtn btn=', btn);
-            if (btn) {
-                btn.node.on('click', () => {
-                    console.log('点击了 commissionBtn');
-                    this.showCommissionPanel();
-                }, this);
-            }
+            this.commissionBtn.on(Node.EventType.TOUCH_END, () => {
+                console.log('点击了 commissionBtn');
+                this.showCommissionPanel();
+            });
         }
         if (this.withdrawBtn) {
-            const btn = this.withdrawBtn.getComponent(Button);
-            console.log('withdrawBtn btn=', btn);
-            if (btn) {
-                btn.node.on('click', () => {
-                    console.log('点击了 withdrawBtn');
-                    this.showWithdrawPanel();
-                }, this);
-            }
+            this.withdrawBtn.on(Node.EventType.TOUCH_END, () => {
+                console.log('点击了 withdrawBtn');
+                this.showWithdrawPanel();
+            });
         }
     }
     
