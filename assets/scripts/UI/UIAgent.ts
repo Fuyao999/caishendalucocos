@@ -1,74 +1,185 @@
-import { _decorator, Component, Node, Label, Button, Sprite, Color, UITransform, Prefab, instantiate } from 'cc';
+import { _decorator, Component, Node, Label, Button, EditBox, Sprite, Color, UITransform, ScrollView, Layout } from 'cc';
 import { GameManager } from '../GameManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('UIAgent')
 export class UIAgent extends Component {
     
+    // === 面板节点 ===
     @property(Node)
     agentPanel: Node = null;
     
+    // 两种状态容器
     @property(Node)
-    activateBtn: Node = null;
-    
-    @property(Node)
-    myDataBtn: Node = null;
+    nonAgentContainer: Node = null;
     
     @property(Node)
-    myTeamBtn: Node = null;
+    agentContainer: Node = null;
+    
+    // 子面板
+    @property(Node)
+    activatePanel: Node = null;
     
     @property(Node)
-    commissionBtn: Node = null;
+    dataPanel: Node = null;
     
     @property(Node)
-    withdrawBtn: Node = null;
+    teamPanel: Node = null;
     
     @property(Node)
-    contentNode: Node = null;
+    teamDetailPanel: Node = null;
     
-    @property(Prefab)
-    agentDataItemPrefab: Node = null;
+    @property(Node)
+    incomePanel: Node = null;
     
-    private _isAgent: boolean = false;
+    @property(Node)
+    withdrawPanel: Node = null;
+    
+    // === NonAgentContainer 节点 ===
+    @property(Button)
+    becomeAgentBtn: Button = null;
+    
+    // === AgentContainer 节点 ===
+    @property(Button)
+    myDataBtn: Button = null;
+    
+    @property(Button)
+    myTeamBtn: Button = null;
+    
+    @property(Button)
+    myIncomeBtn: Button = null;
+    
+    // === ActivatePanel 节点 ===
+    @property(EditBox)
+    codeEditBox: EditBox = null;
+    
+    @property(EditBox)
+    inviteEditBox: EditBox = null;
+    
+    @property(Button)
+    activateBtn: Button = null;
+    
+    @property(Button)
+    activateBackBtn: Button = null;
+    
+    // === DataPanel 节点 ===
+    @property(Button)
+    dataBackBtn: Button = null;
+    
+    @property(Label)
+    levelLabel: Label = null;
+    
+    @property(Label)
+    inviteCodeLabel: Label = null;
+    
+    @property(Button)
+    copyCodeBtn: Button = null;
+    
+    @property(Label)
+    agentTimeLabel: Label = null;
+    
+    @property(Label)
+    currentBenefitsLabel: Label = null;
+    
+    @property(Label)
+    nextConditionLabel: Label = null;
+    
+    @property(Label)
+    nextBenefitsLabel: Label = null;
+    
+    // === TeamPanel 节点 ===
+    @property(Button)
+    teamBackBtn: Button = null;
+    
+    @property(Button)
+    level1Btn: Button = null;
+    
+    @property(Label)
+    level1CountLabel: Label = null;
+    
+    @property(Button)
+    level2Btn: Button = null;
+    
+    @property(Label)
+    level2CountLabel: Label = null;
+    
+    @property(Label)
+    totalLabel: Label = null;
+    
+    @property(Node)
+    teamCustomerListNode: Node = null;
+    
+    // === TeamDetailPanel 节点 ===
+    @property(Button)
+    teamDetailBackBtn: Button = null;
+    
+    @property(Label)
+    teamDetailTitleLabel: Label = null;
+    
+    @property(Node)
+    teamDetailCustomerListNode: Node = null;
+    
+    // === IncomePanel 节点 ===
+    @property(Button)
+    incomeBackBtn: Button = null;
+    
+    @property(Label)
+    totalIncomeLabel: Label = null;
+    
+    @property(Label)
+    withdrawnLabel: Label = null;
+    
+    @property(Label)
+    unwithdrawnLabel: Label = null;
+    
+    @property(Label)
+    withDrawingLabel: Label = null;
+    
+    @property(EditBox)
+    startDateEditBox: EditBox = null;
+    
+    @property(EditBox)
+    endDateEditBox: EditBox = null;
+    
+    @property(Button)
+    queryBtn: Button = null;
+    
+    @property(Label)
+    queryResultLabel: Label = null;
+    
+    @property(Button)
+    incomeWithdrawBtn: Button = null;
+    
+    // === WithdrawPanel 节点 ===
+    @property(Button)
+    withdrawBackBtn: Button = null;
+    
+    @property(Label)
+    availableLabel: Label = null;
+    
+    @property(EditBox)
+    amountEditBox: EditBox = null;
+    
+    @property(Button)
+    submitBtn: Button = null;
+    
+    @property(Button)
+    recordBtn: Button = null;
+    
+    @property(Label)
+    rulesLabel: Label = null;
+    
+    @property(Label)
+    serviceLabel: Label = null;
+    
+    // 代理数据
     private _agentData: any = null;
+    private _isAgent: boolean = false;
     
     start() {
         console.log('UIAgent start');
         this.hide();
-
-        // 绑定主面板按钮点击事件
-        console.log('绑定代理按钮: activateBtn=', this.activateBtn, 'myDataBtn=', this.myDataBtn);
-        
-        if (this.activateBtn) {
-            this.activateBtn.on(Node.EventType.TOUCH_END, () => {
-                console.log('点击了 activateBtn');
-                this.showActivatePanel();
-            });
-        }
-        if (this.myDataBtn) {
-            this.myDataBtn.on(Node.EventType.TOUCH_END, () => {
-                console.log('点击了 myDataBtn');
-                this.updateUI();
-            });
-        }
-        if (this.myTeamBtn) {
-            this.myTeamBtn.on(Node.EventType.TOUCH_END, () => {
-                console.log('点击了 myTeamBtn');
-                this.showMyTeamPanel();
-            });
-        }
-        if (this.commissionBtn) {
-            this.commissionBtn.on(Node.EventType.TOUCH_END, () => {
-                console.log('点击了 commissionBtn');
-                this.showCommissionPanel();
-            });
-        }
-        if (this.withdrawBtn) {
-            this.withdrawBtn.on(Node.EventType.TOUCH_END, () => {
-                console.log('点击了 withdrawBtn');
-                this.showWithdrawPanel();
-            });
-        }
+        this.bindEvents();
     }
     
     show() {
@@ -82,15 +193,82 @@ export class UIAgent extends Component {
         if (this.agentPanel) {
             this.agentPanel.active = false;
         }
-        this.clearContent();
     }
     
-    clearContent() {
-        if (this.contentNode) {
-            this.contentNode.removeAllChildren();
+    // 绑定所有按钮事件
+    bindEvents() {
+        // NonAgentContainer
+        if (this.becomeAgentBtn) {
+            this.becomeAgentBtn.node.on(Node.EventType.TOUCH_END, () => this.showActivatePanel());
+        }
+        
+        // AgentContainer
+        if (this.myDataBtn) {
+            this.myDataBtn.node.on(Node.EventType.TOUCH_END, () => this.showDataPanel());
+        }
+        if (this.myTeamBtn) {
+            this.myTeamBtn.node.on(Node.EventType.TOUCH_END, () => this.showTeamPanel());
+        }
+        if (this.myIncomeBtn) {
+            this.myIncomeBtn.node.on(Node.EventType.TOUCH_END, () => this.showIncomePanel());
+        }
+        
+        // ActivatePanel
+        if (this.activateBtn) {
+            this.activateBtn.node.on(Node.EventType.TOUCH_END, () => this.doActivate());
+        }
+        if (this.activateBackBtn) {
+            this.activateBackBtn.node.on(Node.EventType.TOUCH_END, () => this.showMainPanel());
+        }
+        
+        // DataPanel
+        if (this.dataBackBtn) {
+            this.dataBackBtn.node.on(Node.EventType.TOUCH_END, () => this.showMainPanel());
+        }
+        if (this.copyCodeBtn) {
+            this.copyCodeBtn.node.on(Node.EventType.TOUCH_END, () => this.copyInviteCode());
+        }
+        
+        // TeamPanel
+        if (this.teamBackBtn) {
+            this.teamBackBtn.node.on(Node.EventType.TOUCH_END, () => this.showMainPanel());
+        }
+        if (this.level1Btn) {
+            this.level1Btn.node.on(Node.EventType.TOUCH_END, () => this.showTeamDetail(1));
+        }
+        if (this.level2Btn) {
+            this.level2Btn.node.on(Node.EventType.TOUCH_END, () => this.showTeamDetail(2));
+        }
+        
+        // TeamDetailPanel
+        if (this.teamDetailBackBtn) {
+            this.teamDetailBackBtn.node.on(Node.EventType.TOUCH_END, () => this.showTeamPanel());
+        }
+        
+        // IncomePanel
+        if (this.incomeBackBtn) {
+            this.incomeBackBtn.node.on(Node.EventType.TOUCH_END, () => this.showMainPanel());
+        }
+        if (this.queryBtn) {
+            this.queryBtn.node.on(Node.EventType.TOUCH_END, () => this.querySales());
+        }
+        if (this.incomeWithdrawBtn) {
+            this.incomeWithdrawBtn.node.on(Node.EventType.TOUCH_END, () => this.showWithdrawPanel());
+        }
+        
+        // WithdrawPanel
+        if (this.withdrawBackBtn) {
+            this.withdrawBackBtn.node.on(Node.EventType.TOUCH_END, () => this.showIncomePanel());
+        }
+        if (this.submitBtn) {
+            this.submitBtn.node.on(Node.EventType.TOUCH_END, () => this.doWithdraw());
+        }
+        if (this.recordBtn) {
+            this.recordBtn.node.on(Node.EventType.TOUCH_END, () => this.showWithdrawRecords());
         }
     }
     
+    // 加载代理数据
     async loadAgentData() {
         try {
             const gm = GameManager.instance;
@@ -113,625 +291,395 @@ export class UIAgent extends Component {
         }
     }
     
+    // 更新UI显示
     updateUI() {
-        if (!this._isAgent) {
-            this.showActivatePanel();
+        if (this._isAgent) {
+            this.showMainPanel();
         } else {
-            this.showMyDataPanel();
+            this.showNonAgentPanel();
         }
+    }
+    
+    // 显示非代理面板
+    showNonAgentPanel() {
+        this.hideAllSubPanels();
+        if (this.nonAgentContainer) {
+            this.nonAgentContainer.active = true;
+        }
+        if (this.agentContainer) {
+            this.agentContainer.active = false;
+        }
+    }
+    
+    // 显示代理主面板（三种选择）
+    showMainPanel() {
+        this.hideAllSubPanels();
+        if (this.nonAgentContainer) {
+            this.nonAgentContainer.active = false;
+        }
+        if (this.agentContainer) {
+            this.agentContainer.active = true;
+        }
+    }
+    
+    // 隐藏所有子面板
+    hideAllSubPanels() {
+        const panels = [
+            this.activatePanel,
+            this.dataPanel,
+            this.teamPanel,
+            this.teamDetailPanel,
+            this.incomePanel,
+            this.withdrawPanel
+        ];
+        
+        panels.forEach(panel => {
+            if (panel) panel.active = false;
+        });
     }
     
     // 显示激活面板
     showActivatePanel() {
-        this.clearContent();
-        
-        // 创建激活表单
-        const panel = new Node('ActivatePanel');
-        panel.setParent(this.contentNode);
-        panel.setPosition(0, 0, 0);
-        
-        const transform = panel.addComponent(UITransform);
-        transform.setContentSize(500, 400);
-        
-        // 标题
-        const title = new Node('Title');
-        title.setParent(panel);
-        title.setPosition(0, 150, 0);
-        const titleLabel = title.addComponent(Label);
-        titleLabel.string = '激活代理功能';
-        titleLabel.fontSize = 28;
-        titleLabel.color = new Color(245, 166, 35);
-        titleLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        
-        // 说明
-        const desc = new Node('Desc');
-        desc.setParent(panel);
-        desc.setPosition(0, 80, 0);
-        const descLabel = desc.addComponent(Label);
-        descLabel.string = '购买激活码后，输入激活码和推荐人邀请码即可解锁代理功能';
-        descLabel.fontSize = 16;
-        descLabel.color = new Color(170, 170, 170);
-        descLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        descLabel.verticalAlign = Label.VerticalAlign.CENTER;
-        const descTransform = desc.addComponent(UITransform);
-        descTransform.setContentSize(450, 60);
-        
-        // 激活码输入提示
-        const codeHint = new Node('CodeHint');
-        codeHint.setParent(panel);
-        codeHint.setPosition(-180, 10, 0);
-        const codeHintLabel = codeHint.addComponent(Label);
-        codeHintLabel.string = '激活码:';
-        codeHintLabel.fontSize = 18;
-        codeHintLabel.color = new Color(255, 255, 255);
-        
-        // 激活码输入框背景
-        const codeInputBg = new Node('CodeInputBg');
-        codeInputBg.setParent(panel);
-        codeInputBg.setPosition(50, 10, 0);
-        const codeInputBgSprite = codeInputBg.addComponent(Sprite);
-        codeInputBgSprite.color = new Color(30, 30, 50);
-        const codeInputBgTransform = codeInputBg.addComponent(UITransform);
-        codeInputBgTransform.setContentSize(300, 40);
-        
-        // 激活码文字
-        const codeText = new Node('CodeText');
-        codeText.setParent(codeInputBg);
-        codeText.setPosition(0, 0, 0);
-        const codeTextLabel = codeText.addComponent(Label);
-        codeTextLabel.string = 'XXXX-XXXX-XXXX-XXXX';
-        codeTextLabel.fontSize = 16;
-        codeTextLabel.color = new Color(100, 100, 100);
-        
-        // 推荐码输入提示
-        const inviteHint = new Node('InviteHint');
-        inviteHint.setParent(panel);
-        inviteHint.setPosition(-180, -50, 0);
-        const inviteHintLabel = inviteHint.addComponent(Label);
-        inviteHintLabel.string = '推荐码:';
-        inviteHintLabel.fontSize = 18;
-        inviteHintLabel.color = new Color(255, 255, 255);
-        
-        // 推荐码输入框背景
-        const inviteInputBg = new Node('InviteInputBg');
-        inviteInputBg.setParent(panel);
-        inviteInputBg.setPosition(50, -50, 0);
-        const inviteInputBgSprite = inviteInputBg.addComponent(Sprite);
-        inviteInputBgSprite.color = new Color(30, 30, 50);
-        const inviteInputBgTransform = inviteInputBg.addComponent(UITransform);
-        inviteInputBgTransform.setContentSize(300, 40);
-        
-        // 推荐码文字
-        const inviteText = new Node('InviteText');
-        inviteText.setParent(inviteInputBg);
-        inviteText.setPosition(0, 0, 0);
-        const inviteTextLabel = inviteText.addComponent(Label);
-        inviteTextLabel.string = '5位邀请码（向代理索取）';
-        inviteTextLabel.fontSize = 16;
-        inviteTextLabel.color = new Color(100, 100, 100);
-        
-        // 激活按钮
-        const activateBtn = new Node('ActivateBtn');
-        activateBtn.setParent(panel);
-        activateBtn.setPosition(0, -130, 0);
-        const activateBtnSprite = activateBtn.addComponent(Sprite);
-        activateBtnSprite.color = new Color(233, 69, 96);
-        const activateBtnTransform = activateBtn.addComponent(UITransform);
-        activateBtnTransform.setContentSize(200, 50);
-        
-        // 文字标签节点（避免Sprite和Label冲突）
-        const activateBtnLabelNode = new Node('Label');
-        activateBtnLabelNode.setParent(activateBtn);
-        activateBtnLabelNode.setPosition(0, 0, 0);
-        const activateBtnLabel = activateBtnLabelNode.addComponent(Label);
-        activateBtnLabel.string = '立即激活';
-        activateBtnLabel.fontSize = 20;
-        activateBtnLabel.color = new Color(255, 255, 255);
-        activateBtnLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        activateBtnLabel.verticalAlign = Label.VerticalAlign.CENTER;
-        
-        const activateBtnComp = activateBtn.addComponent(Button);
-        activateBtnComp.interactable = true;
-        activateBtnComp.node.on('click', () => {
-            // TODO: 弹出输入框让用户输入激活码和推荐码
-            this.showToast('请在游戏内输入激活码和推荐码');
-        }, this);
-        
-        // 返回按钮
-        const backBtn = new Node('BackBtn');
-        backBtn.setParent(panel);
-        backBtn.setPosition(0, -200, 0);
-        const backBtnSprite = backBtn.addComponent(Sprite);
-        backBtnSprite.color = new Color(60, 60, 80);
-        const backBtnTransform = backBtn.addComponent(UITransform);
-        backBtnTransform.setContentSize(120, 40);
-        
-        // 文字标签节点
-        const backBtnLabelNode = new Node('Label');
-        backBtnLabelNode.setParent(backBtn);
-        backBtnLabelNode.setPosition(0, 0, 0);
-        const backBtnLabel = backBtnLabelNode.addComponent(Label);
-        backBtnLabel.string = '返回';
-        backBtnLabel.fontSize = 16;
-        backBtnLabel.color = new Color(200, 200, 200);
-        backBtnLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        backBtnLabel.verticalAlign = Label.VerticalAlign.CENTER;
-        
-        const backBtnComp = backBtn.addComponent(Button);
-        backBtnComp.interactable = true;
-        backBtnComp.node.on('click', () => this.hide(), this);
+        this.hideAllSubPanels();
+        if (this.activatePanel) {
+            this.activatePanel.active = true;
+        }
+        // 清空输入框
+        if (this.codeEditBox) this.codeEditBox.string = '';
+        if (this.inviteEditBox) this.inviteEditBox.string = '';
     }
     
-    // 显示我的数据面板
-    showMyDataPanel() {
-        this.clearContent();
+    // 执行激活
+    async doActivate() {
+        const code = this.codeEditBox?.string?.trim() || '';
+        const invite = this.inviteEditBox?.string?.trim() || '';
         
-        if (!this._agentData) return;
-        
-        const data = this._agentData;
-        
-        // 创建我的数据面板
-        const panel = new Node('MyDataPanel');
-        panel.setParent(this.contentNode);
-        panel.setPosition(0, 0, 0);
-        
-        const transform = panel.addComponent(UITransform);
-        transform.setContentSize(600, 500);
-        
-        // 我的邀请码
-        const inviteTitle = new Node('InviteTitle');
-        inviteTitle.setParent(panel);
-        inviteTitle.setPosition(-200, 220, 0);
-        const inviteTitleLabel = inviteTitle.addComponent(Label);
-        inviteTitleLabel.string = '我的邀请码:';
-        inviteTitleLabel.fontSize = 18;
-        inviteTitleLabel.color = new Color(255, 255, 255);
-        
-        const inviteCode = new Node('InviteCode');
-        inviteCode.setParent(panel);
-        inviteCode.setPosition(50, 220, 0);
-        const inviteCodeLabel = inviteCode.addComponent(Label);
-        inviteCodeLabel.string = data.invitation_code || '-';
-        inviteCodeLabel.fontSize = 24;
-        inviteCodeLabel.color = new Color(245, 166, 35);
-        
-        // 等级
-        const levelTitle = new Node('LevelTitle');
-        levelTitle.setParent(panel);
-        levelTitle.setPosition(-200, 170, 0);
-        const levelTitleLabel = levelTitle.addComponent(Label);
-        levelTitleLabel.string = '代理等级:';
-        levelTitleLabel.fontSize = 18;
-        levelTitleLabel.color = new Color(255, 255, 255);
-        
-        const levelValue = new Node('LevelValue');
-        levelValue.setParent(panel);
-        levelValue.setPosition(50, 170, 0);
-        const levelValueLabel = levelValue.addComponent(Label);
-        levelValueLabel.string = `Lv.${data.level}`;
-        levelValueLabel.fontSize = 24;
-        levelValueLabel.color = new Color(245, 166, 35);
-        
-        // 直推单数
-        const directTitle = new Node('DirectTitle');
-        directTitle.setParent(panel);
-        directTitle.setPosition(-200, 120, 0);
-        const directTitleLabel = directTitle.addComponent(Label);
-        directTitleLabel.string = '直推单数:';
-        directTitleLabel.fontSize = 18;
-        directTitleLabel.color = new Color(255, 255, 255);
-        
-        const directValue = new Node('DirectValue');
-        directValue.setParent(panel);
-        directValue.setPosition(50, 120, 0);
-        const directValueLabel = directValue.addComponent(Label);
-        directValueLabel.string = `${data.direct_orders} 单`;
-        directValueLabel.fontSize = 20;
-        directValueLabel.color = new Color(100, 200, 100);
-        
-        // 团队单数
-        const teamTitle = new Node('TeamTitle');
-        teamTitle.setParent(panel);
-        teamTitle.setPosition(-200, 70, 0);
-        const teamTitleLabel = teamTitle.addComponent(Label);
-        teamTitleLabel.string = '团队单数:';
-        teamTitleLabel.fontSize = 18;
-        teamTitleLabel.color = new Color(255, 255, 255);
-        
-        const teamValue = new Node('TeamValue');
-        teamValue.setParent(panel);
-        teamValue.setPosition(50, 70, 0);
-        const teamValueLabel = teamValue.addComponent(Label);
-        teamValueLabel.string = `${data.team_orders} 单`;
-        teamValueLabel.fontSize = 20;
-        teamValueLabel.color = new Color(100, 200, 100);
-        
-        // 佣金统计
-        const commissionTitle = new Node('CommissionTitle');
-        commissionTitle.setParent(panel);
-        commissionTitle.setPosition(-200, 10, 0);
-        const commissionTitleLabel = commissionTitle.addComponent(Label);
-        commissionTitleLabel.string = '佣金统计:';
-        commissionTitleLabel.fontSize = 18;
-        commissionTitleLabel.color = new Color(255, 255, 255);
-        
-        const commissionY = -40;
-        
-        const pendingTitle = new Node('PendingTitle');
-        pendingTitle.setParent(panel);
-        pendingTitle.setPosition(-180, commissionY, 0);
-        const pendingTitleLabel = pendingTitle.addComponent(Label);
-        pendingTitleLabel.string = '待发放:';
-        pendingTitleLabel.fontSize = 14;
-        pendingTitleLabel.color = new Color(180, 180, 180);
-        
-        const pendingValue = new Node('PendingValue');
-        pendingValue.setParent(panel);
-        pendingValue.setPosition(0, commissionY, 0);
-        const pendingValueLabel = pendingValue.addComponent(Label);
-        pendingValueLabel.string = `¥${(data.commission?.pending || 0).toFixed(2)}`;
-        pendingValueLabel.fontSize = 16;
-        pendingValueLabel.color = new Color(245, 166, 35);
-        
-        const settledTitle = new Node('SettledTitle');
-        settledTitle.setParent(panel);
-        settledTitle.setPosition(-180, commissionY - 30, 0);
-        const settledTitleLabel = settledTitle.addComponent(Label);
-        settledTitleLabel.string = '已结算:';
-        settledTitleLabel.fontSize = 14;
-        settledTitleLabel.color = new Color(180, 180, 180);
-        
-        const settledValue = new Node('SettledValue');
-        settledValue.setParent(panel);
-        settledValue.setPosition(0, commissionY - 30, 0);
-        const settledValueLabel = settledValue.addComponent(Label);
-        settledValueLabel.string = `¥${(data.commission?.settled || 0).toFixed(2)}`;
-        settledValueLabel.fontSize = 16;
-        settledValueLabel.color = new Color(100, 200, 100);
-        
-        // 升级进度
-        if (data.upgrade_progress) {
-            const progress = data.upgrade_progress;
-            
-            const progressTitle = new Node('ProgressTitle');
-            progressTitle.setParent(panel);
-            progressTitle.setPosition(-200, -120, 0);
-            const progressTitleLabel = progressTitle.addComponent(Label);
-            progressTitleLabel.string = `升级进度 (Lv.${progress.current_level} → Lv.${progress.next_level || '满级'}):`;
-            progressTitleLabel.fontSize = 16;
-            progressTitleLabel.color = new Color(245, 166, 35);
-            
-            let yPos = -160;
-            for (const cond of progress.conditions || []) {
-                const condText = new Node('CondText');
-                condText.setParent(panel);
-                condText.setPosition(-180, yPos, 0);
-                const condLabel = condText.addComponent(Label);
-                condLabel.string = `${cond.name}: ${cond.current}/${cond.required} ${cond.met ? '✅' : '❌'}`;
-                condLabel.fontSize = 14;
-                condLabel.color = cond.met ? new Color(100, 200, 100) : new Color(200, 100, 100);
-                yPos -= 30;
-            }
+        if (!code || !invite) {
+            console.log('请输入激活码和邀请码');
+            return;
         }
         
-        // 按钮区域
-        const btnY = -280;
-        
-        // 我的团队按钮
-        const teamBtn = this.createButton('我的团队', 0, btnY);
-        teamBtn.setParent(panel);
-        teamBtn.on('click', () => this.showMyTeamPanel(), this);
-        
-        // 佣金记录按钮
-        const commBtn = this.createButton('佣金记录', 0, btnY - 60);
-        commBtn.setParent(panel);
-        commBtn.on('click', () => this.showCommissionPanel(), this);
-        
-        // 提现按钮
-        const wdBtn = this.createButton('申请提现', 0, btnY - 120);
-        wdBtn.setParent(panel);
-        wdBtn.on('click', () => this.showWithdrawPanel(), this);
+        try {
+            const gm = GameManager.instance;
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/activate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${gm.dataManager.get('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ activation_code: code, invite_code: invite })
+            });
+            const data = await response.json();
+            
+            if (data.code === 0) {
+                console.log('激活成功');
+                this.showToast('激活成功');
+                this.loadAgentData();
+            } else {
+                console.log('激活失败:', data.message);
+                this.showToast(data.message || '激活失败');
+            }
+        } catch (e) {
+            console.error('激活失败:', e);
+        }
     }
     
-    // 创建按钮辅助方法
-    createButton(text: string, x: number, y: number): Node {
-        const btn = new Node('Btn');
-        btn.setParent(this.contentNode);
-        btn.setPosition(x, y, 0);
+    // 显示我的资料面板
+    showDataPanel() {
+        this.hideAllSubPanels();
+        if (this.dataPanel) {
+            this.dataPanel.active = true;
+        }
         
-        const sprite = btn.addComponent(Sprite);
-        sprite.color = new Color(233, 69, 96);
-        
-        const transform = btn.addComponent(UITransform);
-        transform.setContentSize(160, 45);
-        
-        // 创建子节点用于显示文字（避免Sprite和Label冲突）
-        const labelNode = new Node('Label');
-        labelNode.setParent(btn);
-        labelNode.setPosition(0, 0, 0);
-        
-        const label = labelNode.addComponent(Label);
-        label.string = text;
-        label.fontSize = 18;
-        label.color = new Color(255, 255, 255);
-        label.horizontalAlign = Label.HorizontalAlign.CENTER;
-        label.verticalAlign = Label.VerticalAlign.CENTER;
-        
-        const button = btn.addComponent(Button);
-        button.interactable = true;
-        
-        return btn;
+        if (this._agentData) {
+            const d = this._agentData;
+            
+            // 等级
+            if (this.levelLabel) {
+                this.levelLabel.string = `等级 Lv.${d.level || 1}`;
+            }
+            
+            // 邀请码
+            if (this.inviteCodeLabel) {
+                this.inviteCodeLabel.string = `邀请码：${d.invitation_code || '-'}`;
+            }
+            
+            // 成为代理时间
+            if (this.agentTimeLabel) {
+                const time = d.agent_activated_at ? new Date(d.agent_activated_at).toLocaleString() : '-';
+                this.agentTimeLabel.string = `成为代理时间：${time}`;
+            }
+            
+            // 当前权益
+            if (this.currentBenefitsLabel) {
+                this.currentBenefitsLabel.string = `当前权益：${d.current_benefits || '-'}`;
+            }
+            
+            // 下一级条件
+            if (this.nextConditionLabel) {
+                this.nextConditionLabel.string = `下一级还差：${d.next_level_condition || '-'}`;
+            }
+            
+            // 下一级权益
+            if (this.nextBenefitsLabel) {
+                this.nextBenefitsLabel.string = `下一级权益：${d.next_level_benefits || '-'}`;
+            }
+        }
+    }
+    
+    // 复制邀请码
+    copyInviteCode() {
+        const code = this._agentData?.invitation_code || '';
+        if (code && navigator.clipboard) {
+            navigator.clipboard.writeText(code).then(() => {
+                this.showToast('邀请码已复制');
+            });
+        }
     }
     
     // 显示我的团队面板
-    async showMyTeamPanel() {
-        this.clearContent();
+    showTeamPanel() {
+        this.hideAllSubPanels();
+        if (this.teamPanel) {
+            this.teamPanel.active = true;
+        }
+        
+        if (this._agentData) {
+            const d = this._agentData;
+            
+            if (this.level1CountLabel) {
+                this.level1CountLabel.string = `${d.level1_count || 0}人`;
+            }
+            if (this.level2CountLabel) {
+                this.level2CountLabel.string = `${d.level2_count || 0}人`;
+            }
+            if (this.totalLabel) {
+                this.totalLabel.string = `总客户数：${d.total_customer || 0}`;
+            }
+        }
+    }
+    
+    // 显示团队详情
+    async showTeamDetail(level: number) {
+        this.hideAllSubPanels();
+        if (this.teamDetailPanel) {
+            this.teamDetailPanel.active = true;
+        }
+        
+        if (this.teamDetailTitleLabel) {
+            this.teamDetailTitleLabel.string = `${level}级客户列表`;
+        }
+        
+        // 清空列表
+        this.clearCustomerList(this.teamDetailCustomerListNode);
         
         try {
             const gm = GameManager.instance;
-            const response = await fetch(`${gm.networkManager._baseUrl}/agent/my-team`, {
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/team-detail?level=${level}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${gm.dataManager.get('token')}`
-                },
-                credentials: 'include'
+                }
             });
-            const result = await response.json();
+            const data = await response.json();
             
-            if (result.code === 0) {
-                this.renderTeamPanel(result.data);
+            if (data.code === 0 && data.data) {
+                this.renderCustomerList(this.teamDetailCustomerListNode, data.data);
             }
         } catch (e) {
-            console.error('加载团队数据失败:', e);
+            console.error('加载团队详情失败:', e);
         }
     }
     
-    renderTeamPanel(data: any) {
-        const panel = new Node('TeamPanel');
-        panel.setParent(this.contentNode);
-        panel.setPosition(0, 0, 0);
-        
-        const transform = panel.addComponent(UITransform);
-        transform.setContentSize(600, 500);
-        
-        // 标题
-        const title = new Node('Title');
-        title.setParent(panel);
-        title.setPosition(0, 220, 0);
-        const titleLabel = title.addComponent(Label);
-        titleLabel.string = '我的团队';
-        titleLabel.fontSize = 24;
-        titleLabel.color = new Color(245, 166, 35);
-        titleLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        
-        // 团队总订单
-        const totalTitle = new Node('TotalTitle');
-        totalTitle.setParent(panel);
-        totalTitle.setPosition(-150, 170, 0);
-        const totalTitleLabel = totalTitle.addComponent(Label);
-        totalTitleLabel.string = '团队总订单:';
-        totalTitleLabel.fontSize = 18;
-        totalTitleLabel.color = new Color(255, 255, 255);
-        
-        const totalValue = new Node('TotalValue');
-        totalValue.setParent(panel);
-        totalValue.setPosition(80, 170, 0);
-        const totalValueLabel = totalValue.addComponent(Label);
-        totalValueLabel.string = `${data.team_total_orders} 单`;
-        totalValueLabel.fontSize = 22;
-        totalValueLabel.color = new Color(100, 200, 100);
-        
-        // 月度统计
-        const monthTitle = new Node('MonthTitle');
-        monthTitle.setParent(panel);
-        monthTitle.setPosition(-150, 120, 0);
-        const monthTitleLabel = monthTitle.addComponent(Label);
-        monthTitleLabel.string = '月度统计:';
-        monthTitleLabel.fontSize = 18;
-        monthTitleLabel.color = new Color(255, 255, 255);
-        
-        let yPos = 80;
-        for (const m of data.monthly_stats || []) {
-            const monthText = new Node('MonthText');
-            monthText.setParent(panel);
-            monthText.setPosition(-150, yPos, 0);
-            const monthLabel = monthText.addComponent(Label);
-            monthLabel.string = `${m.month}: ${m.order_count}单 / ¥${m.total_amount.toFixed(2)}`;
-            monthLabel.fontSize = 16;
-            monthLabel.color = new Color(200, 200, 200);
-            yPos -= 30;
+    // 清空客户列表
+    clearCustomerList(listNode: Node) {
+        if (listNode) {
+            listNode.removeAllChildren();
         }
-        
-        // 返回按钮
-        const backBtn = this.createButton('返回', 0, -200);
-        backBtn.setParent(panel);
-        backBtn.on('click', () => this.showMyDataPanel(), this);
     }
     
-    // 显示佣金记录面板
-    async showCommissionPanel() {
-        this.clearContent();
+    // 渲染客户列表
+    renderCustomerList(listNode: Node, customers: any[]) {
+        if (!listNode || !customers) return;
+        
+        customers.forEach(customer => {
+            const item = new Node('CustomerItem');
+            item.setParent(listNode);
+            
+            const transform = item.addComponent(UITransform);
+            transform.setContentSize(400, 60);
+            
+            // 头像
+            const avatar = new Node('Avatar');
+            avatar.setParent(item);
+            avatar.setPosition(-170, 0, 0);
+            const avatarSprite = avatar.addComponent(Sprite);
+            
+            // 昵称
+            const nickname = new Node('Nickname');
+            nickname.setParent(item);
+            nickname.setPosition(-120, 0, 0);
+            const nicknameLabel = nickname.addComponent(Label);
+            nicknameLabel.string = customer.nickname || '-';
+            nicknameLabel.fontSize = 14;
+            
+            // 玩家ID
+            const playerId = new Node('PlayerId');
+            playerId.setParent(item);
+            playerId.setPosition(-50, 0, 0);
+            const playerIdLabel = playerId.addComponent(Label);
+            playerIdLabel.string = `ID:${customer.player_id || '-'}`;
+            playerIdLabel.fontSize = 12;
+            
+            // 加入时间
+            const joinTime = new Node('JoinTime');
+            joinTime.setParent(item);
+            joinTime.setPosition(40, 0, 0);
+            const joinTimeLabel = joinTime.addComponent(Label);
+            joinTimeLabel.string = customer.join_time || '-';
+            joinTimeLabel.fontSize = 12;
+            
+            // 订单数
+            const orderCount = new Node('OrderCount');
+            orderCount.setParent(item);
+            orderCount.setPosition(100, 0, 0);
+            const orderCountLabel = orderCount.addComponent(Label);
+            orderCountLabel.string = `订单:${customer.order_count || 0}`;
+            orderCountLabel.fontSize = 12;
+            
+            // 客户数
+            const customerCount = new Node('CustomerCount');
+            customerCount.setParent(item);
+            customerCount.setPosition(160, 0, 0);
+            const customerCountLabel = customerCount.addComponent(Label);
+            customerCountLabel.string = `客户:${customer.customer_count || 0}`;
+            customerCountLabel.fontSize = 12;
+            
+            // 订单总额
+            const orderTotal = new Node('OrderTotal');
+            orderTotal.setParent(item);
+            orderTotal.setPosition(220, 0, 0);
+            const orderTotalLabel = orderTotal.addComponent(Label);
+            orderTotalLabel.string = `总额:${customer.order_total || 0}`;
+            orderTotalLabel.fontSize = 12;
+        });
+    }
+    
+    // 显示我的收入面板
+    showIncomePanel() {
+        this.hideAllSubPanels();
+        if (this.incomePanel) {
+            this.incomePanel.active = true;
+        }
+        
+        if (this._agentData) {
+            const d = this._agentData;
+            
+            if (this.totalIncomeLabel) {
+                this.totalIncomeLabel.string = `累计收入：${d.total_income || 0}`;
+            }
+            if (this.withdrawnLabel) {
+                this.withdrawnLabel.string = `已提现：${d.withdrawn || 0}`;
+            }
+            if (this.unwithdrawnLabel) {
+                this.unwithdrawnLabel.string = `未提现：${d.unwithdrawn || 0}`;
+            }
+            if (this.withDrawingLabel) {
+                this.withDrawingLabel.string = `提现中：${d.withdrawing || 0}`;
+            }
+        }
+    }
+    
+    // 查询销售额
+    async querySales() {
+        const startDate = this.startDateEditBox?.string?.trim() || '';
+        const endDate = this.endDateEditBox?.string?.trim() || '';
+        
+        if (!startDate || !endDate) {
+            console.log('请输入起止日期');
+            return;
+        }
         
         try {
             const gm = GameManager.instance;
-            const response = await fetch(`${gm.networkManager._baseUrl}/agent/commission-records?limit=50`, {
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/sales?start=${startDate}&end=${endDate}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${gm.dataManager.get('token')}`
-                },
-                credentials: 'include'
+                }
             });
-            const result = await response.json();
+            const data = await response.json();
             
-            if (result.code === 0) {
-                this.renderCommissionPanel(result.data);
+            if (data.code === 0 && this.queryResultLabel) {
+                this.queryResultLabel.string = `查询结果：${data.data.total || 0}`;
             }
         } catch (e) {
-            console.error('加载佣金记录失败:', e);
+            console.error('查询销售额失败:', e);
         }
-    }
-    
-    renderCommissionPanel(records: any[]) {
-        const panel = new Node('CommissionPanel');
-        panel.setParent(this.contentNode);
-        panel.setPosition(0, 0, 0);
-        
-        const transform = panel.addComponent(UITransform);
-        transform.setContentSize(600, 500);
-        
-        // 标题
-        const title = new Node('Title');
-        title.setParent(panel);
-        title.setPosition(0, 220, 0);
-        const titleLabel = title.addComponent(Label);
-        titleLabel.string = '佣金记录';
-        titleLabel.fontSize = 24;
-        titleLabel.color = new Color(245, 166, 35);
-        titleLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        
-        let yPos = 170;
-        for (const r of records || []) {
-            const typeStr = r.type === 'base' ? (r.level === 1 ? '直推' : '间推') : '团队奖金';
-            const statusStr = r.status === 'pending' ? '待发放' : r.status === 'settled' ? '已结算' : '已提现';
-            
-            const recordText = new Node('RecordText');
-            recordText.setParent(panel);
-            recordText.setPosition(0, yPos, 0);
-            const recordLabel = recordText.addComponent(Label);
-            recordLabel.string = `${typeStr} | ¥${parseFloat(r.amount).toFixed(2)} | ${statusStr} | ${r.created_at?.substring(0, 10) || '-'}`;
-            recordLabel.fontSize = 14;
-            recordLabel.color = new Color(200, 200, 200);
-            yPos -= 30;
-            
-            if (yPos < -200) break;
-        }
-        
-        // 返回按钮
-        const backBtn = this.createButton('返回', 0, -220);
-        backBtn.setParent(panel);
-        backBtn.on('click', () => this.showMyDataPanel(), this);
     }
     
     // 显示提现面板
-    async showWithdrawPanel() {
-        this.clearContent();
+    showWithdrawPanel() {
+        this.hideAllSubPanels();
+        if (this.withdrawPanel) {
+            this.withdrawPanel.active = true;
+        }
         
-        const panel = new Node('WithdrawPanel');
-        panel.setParent(this.contentNode);
-        panel.setPosition(0, 0, 0);
+        if (this.availableLabel) {
+            this.availableLabel.string = `可提现金额：${this._agentData?.available_amount || 0}`;
+        }
+        if (this.rulesLabel) {
+            this.rulesLabel.string = '提现规则：满100元可提现，每月限提3次';
+        }
+        if (this.serviceLabel) {
+            this.serviceLabel.string = '联系客服：caishen_admin';
+        }
         
-        const transform = panel.addComponent(UITransform);
-        transform.setContentSize(600, 500);
-        
-        // 标题
-        const title = new Node('Title');
-        title.setParent(panel);
-        title.setPosition(0, 200, 0);
-        const titleLabel = title.addComponent(Label);
-        titleLabel.string = '申请提现';
-        titleLabel.fontSize = 24;
-        titleLabel.color = new Color(245, 166, 35);
-        titleLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        
-        // 提现说明
-        const desc = new Node('Desc');
-        desc.setParent(panel);
-        desc.setPosition(0, 150, 0);
-        const descLabel = desc.addComponent(Label);
-        descLabel.string = '请联系客服申请提现\n客服将打款至您的账户';
-        descLabel.fontSize = 16;
-        descLabel.color = new Color(170, 170, 170);
-        descLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        descLabel.verticalAlign = Label.VerticalAlign.CENTER;
-        const descTransform = desc.addComponent(UITransform);
-        descTransform.setContentSize(400, 60);
-        
-        // 申请按钮
-        const applyBtn = this.createButton('联系客服', 0, 50);
-        applyBtn.setParent(panel);
-        applyBtn.on('click', () => {
-            this.showToast('请联系客服微信: caishen_admin');
-        }, this);
-        
-        // 提现记录按钮
-        const recordsBtn = this.createButton('提现记录', 0, -10);
-        recordsBtn.setParent(panel);
-        recordsBtn.on('click', () => this.showWithdrawRecordsPanel(), this);
-        
-        // 返回按钮
-        const backBtn = this.createButton('返回', 0, -100);
-        backBtn.setParent(panel);
-        backBtn.on('click', () => this.showMyDataPanel(), this);
+        if (this.amountEditBox) {
+            this.amountEditBox.string = '';
+        }
     }
     
-    // 显示提现记录面板
-    async showWithdrawRecordsPanel() {
-        this.clearContent();
+    // 执行提现
+    async doWithdraw() {
+        const amount = this.amountEditBox?.string?.trim() || '';
+        
+        if (!amount) {
+            console.log('请输入提现金额');
+            return;
+        }
         
         try {
             const gm = GameManager.instance;
-            const response = await fetch(`${gm.networkManager._baseUrl}/agent/withdraw-records`, {
-                method: 'GET',
+            const response = await fetch(`${gm.networkManager._baseUrl}/agent/withdraw`, {
+                method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${gm.dataManager.get('token')}`
+                    'Authorization': `Bearer ${gm.dataManager.get('token')}`,
+                    'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                body: JSON.stringify({ amount: parseFloat(amount) })
             });
-            const result = await response.json();
+            const data = await response.json();
             
-            if (result.code === 0) {
-                this.renderWithdrawRecordsPanel(result.data);
+            if (data.code === 0) {
+                this.showToast('提现申请已提交');
+                this.showIncomePanel();
+            } else {
+                this.showToast(data.message || '提现失败');
             }
         } catch (e) {
-            console.error('加载提现记录失败:', e);
+            console.error('提现失败:', e);
         }
     }
     
-    renderWithdrawRecordsPanel(records: any[]) {
-        const panel = new Node('WithdrawRecordsPanel');
-        panel.setParent(this.contentNode);
-        panel.setPosition(0, 0, 0);
-        
-        const transform = panel.addComponent(UITransform);
-        transform.setContentSize(600, 500);
-        
-        // 标题
-        const title = new Node('Title');
-        title.setParent(panel);
-        title.setPosition(0, 220, 0);
-        const titleLabel = title.addComponent(Label);
-        titleLabel.string = '提现记录';
-        titleLabel.fontSize = 24;
-        titleLabel.color = new Color(245, 166, 35);
-        titleLabel.horizontalAlign = Label.HorizontalAlign.CENTER;
-        
-        let yPos = 170;
-        for (const r of records || []) {
-            let statusStr = '';
-            if (r.status === 'pending') statusStr = '申请中';
-            else if (r.status === 'paid') statusStr = '已打款';
-            else if (r.status === 'rejected') statusStr = '已拒绝';
-            
-            const recordText = new Node('RecordText');
-            recordText.setParent(panel);
-            recordText.setPosition(0, yPos, 0);
-            const recordLabel = recordText.addComponent(Label);
-            recordLabel.string = `¥${parseFloat(r.amount).toFixed(2)} | ${statusStr} | ${r.apply_at?.substring(0, 10) || '-'}`;
-            recordLabel.fontSize = 14;
-            recordLabel.color = new Color(200, 200, 200);
-            yPos -= 30;
-            
-            if (yPos < -200) break;
-        }
-        
-        // 返回按钮
-        const backBtn = this.createButton('返回', 0, -220);
-        backBtn.setParent(panel);
-        backBtn.on('click', () => this.showWithdrawPanel(), this);
+    // 显示提现记录（待实现）
+    showWithdrawRecords() {
+        console.log('显示提现记录');
+        this.showToast('功能开发中');
     }
     
+    // 显示提示
     showToast(message: string) {
-        // 简单的toast提示
-        console.log('[Toast]', message);
+        console.log('Toast:', message);
     }
 }
