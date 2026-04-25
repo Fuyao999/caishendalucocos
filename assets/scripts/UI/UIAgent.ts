@@ -37,10 +37,16 @@ export class UIAgent extends Component {
         this.hide();
 
         // 绑定主面板按钮点击事件
+        console.log('绑定代理按钮: activateBtn=', this.activateBtn, 'myDataBtn=', this.myDataBtn);
+        
         if (this.activateBtn) {
             const btn = this.activateBtn.getComponent(Button);
+            console.log('activateBtn btn=', btn);
             if (btn) {
-                btn.node.on('click', () => this.showActivatePanel(), this);
+                btn.node.on('click', () => {
+                    console.log('点击了 activateBtn');
+                    this.showActivatePanel();
+                }, this);
             }
         }
         if (this.myDataBtn) {
